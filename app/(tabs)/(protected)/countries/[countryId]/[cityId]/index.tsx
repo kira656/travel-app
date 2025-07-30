@@ -1,3 +1,5 @@
+import { MapView, Marker } from '@/components/MapView';
+import SafeAreaView from '@/components/SafeAreaView';
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,12 +9,10 @@ import {
     Image,
     Platform,
     Pressable,
-    SafeAreaView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 
 const cityCoordinates: Record<
   string,
@@ -95,7 +95,10 @@ export default function CityDetails() {
   const cityData = cityCoordinates[cityId as keyof typeof cityCoordinates];
 
   return (
-    <SafeAreaView style={[styles.container, darkMode && styles.darkContainer]}>
+    <SafeAreaView 
+      style={styles.container} 
+      backgroundColor={darkMode ? '#121212' : '#fff'}
+    >
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
@@ -150,8 +153,7 @@ export default function CityDetails() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  darkContainer: { backgroundColor: '#121212' },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

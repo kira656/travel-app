@@ -8,6 +8,7 @@ import { useFonts } from 'expo-font';
 import { Slot } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 const queryClient = new QueryClient();
 
 // Configure the onlineManager for network status
@@ -56,8 +57,10 @@ export default function RootLayout() {
 
   // No ThemeProvider needed anymore!
   return (
-    <QueryClientProvider client={queryClient}>
-      <Slot />
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <Slot />
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

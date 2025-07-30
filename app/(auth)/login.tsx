@@ -6,16 +6,16 @@ import { useFonts } from 'expo-font';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 export default function Login() {
@@ -74,7 +74,7 @@ export default function Login() {
         emailOrUsername: formData.usernameOrEmail,
         password: formData.password,
       });
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)');
 
     } catch (err: any) {
       setErrors((prev) => ({ ...prev, general: err.message || 'Login failed' }));
@@ -84,7 +84,7 @@ export default function Login() {
   };
 
   const handleGoBack = () => {
-    router.back();
+    router.replace('/');
   };
 
   if (!fontsLoaded) {

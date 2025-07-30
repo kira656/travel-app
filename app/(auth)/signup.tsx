@@ -3,16 +3,16 @@ import { useFonts } from 'expo-font';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useAuthStore } from '../../stores/authStore'; // Import your authStore
 import { useThemeStore } from '../../stores/themeStore';
@@ -49,7 +49,7 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoBack = () => {
-    router.back();
+    router.replace('/');
   };
 
   const handleChange = (name: string, value: string) => {
@@ -129,7 +129,7 @@ export default function Signup() {
       });
 
       // Redirect to the home page after successful signup and state update
-      router.replace('/(tabs)/home'); // Adjust this path to your actual home page route
+      router.replace('/(tabs)');
 
     } catch (error: any) {
       console.error('Signup error:', error);
