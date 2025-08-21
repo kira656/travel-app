@@ -1,15 +1,14 @@
-import AppLayout from '@/components/AppLayout';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function ProfileScreen() {
@@ -31,7 +30,7 @@ export default function ProfileScreen() {
       id: 'personal',
       title: 'Personal Information',
       icon: 'person',
-      onPress: () => console.log('Personal Info'),
+      onPress: () => router.push('/account/personal'),
     },
     {
       id: 'bookings',
@@ -49,7 +48,7 @@ export default function ProfileScreen() {
       id: 'settings',
       title: 'Settings',
       icon: 'settings',
-      onPress: () => console.log('Settings'),
+      onPress: () => router.push('/account/settings'),
     },
     {
       id: 'help',
@@ -60,7 +59,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <AppLayout headerTitle="Profile">
+    
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={[styles.profileHeader, darkMode && styles.darkProfileHeader]}>
@@ -126,7 +125,7 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
-    </AppLayout>
+    
   );
 }
 

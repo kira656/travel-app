@@ -1,65 +1,62 @@
-// app/layout.tsx
-import { useColorScheme } from '@/hooks/useColorScheme';
+// app/_layout.tsx
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import NetInfo from '@react-native-community/netinfo';
 import { QueryClient, QueryClientProvider, focusManager, onlineManager } from '@tanstack/react-query';
-import { useFonts } from 'expo-font';
-import { Slot } from 'expo-router';
+import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { AppState, AppStateStatus, Platform } from 'react-native';
+import { AppStateStatus, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 const queryClient = new QueryClient();
 
-// Configure the onlineManager for network status
 onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {
     setOnline(!!state.isConnected);
   });
 });
 
-// Configure the focusManager for app foreground/background status
 function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== 'web') {
     focusManager.setFocused(status === 'active');
   }
 }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme(); // This hook might need to be adjusted or removed if its logic is now entirely in your themeStore
+const InitialLayout = () => {
+  const { isLoggedIn, isLoading } = useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
 
-  // Get actions from Zustand stores
-  const bootstrapAuth = useAuthStore((state) => state.bootstrapAuth);
-  const loadTheme = useThemeStore((state) => state.loadTheme); // Get the loadTheme action
-
-  // useEffect for AppState listener
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', onAppStateChange);
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+    if (isLoading) return;
 
-  // useEffect to call bootstrapAuth and loadTheme once when the app mounts
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (isLoggedIn && inAuthGroup) {
+      // Correctly redirect to the protected group's root
+      router.replace('/(tabs)/(protected)/countries'); 
+    } else if (!isLoggedIn && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    }
+  }, [isLoggedIn, isLoading, segments, router]);
+
+  return <Slot />; // Slot is crucial here
+};
+
+export default function RootLayout() {
+  const bootstrapAuth = useAuthStore((state) => state.bootstrapAuth);
+  const loadTheme = useThemeStore((state) => state.loadTheme);
+
   useEffect(() => {
     bootstrapAuth();
-    loadTheme(); // Call loadTheme here as well
-  }, [bootstrapAuth, loadTheme]); // Both are stable function references
+    loadTheme();
+  }, [bootstrapAuth, loadTheme]);
 
-  // Font loading
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
 
-  if (!loaded) {
-    return null;
-  }
-
-  // No ThemeProvider needed anymore!
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <Slot />
+        <InitialLayout />
       </QueryClientProvider>
     </SafeAreaProvider>
   );

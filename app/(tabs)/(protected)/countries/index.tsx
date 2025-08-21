@@ -1,6 +1,5 @@
 import { countriesApi } from '@/apis/countries';
 import type { Country } from '@/apis/countries.types';
-import AppLayout from '@/components/AppLayout';
 import { useThemeStore } from '@/stores/themeStore';
 import { getImageUrl } from '@/utils/imageUtils';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -8,15 +7,15 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function CountriesScreen() {
@@ -117,20 +116,20 @@ export default function CountriesScreen() {
 
   if (isLoading) {
     return (
-      <AppLayout headerTitle="Countries">
+      
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={darkMode ? '#0a7ea4' : '#0a7ea4'} />
           <Text style={[styles.loadingText, darkMode && styles.darkText]}>
             Loading countries...
           </Text>
         </View>
-      </AppLayout>
+     
     );
   }
 
   if (error) {
     return (
-      <AppLayout headerTitle="Countries">
+      
         <View style={styles.errorContainer}>
           <MaterialIcons 
             name="error-outline" 
@@ -152,12 +151,12 @@ export default function CountriesScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </AppLayout>
+      
     );
   }
 
   return (
-    <AppLayout headerTitle="Countries">
+    <>
       {/* Search Bar */}
       <View style={styles.searchSection}>
         <View style={[styles.searchContainer, darkMode && styles.darkSearchContainer]}>
@@ -221,7 +220,7 @@ export default function CountriesScreen() {
           </View>
         }
       />
-    </AppLayout>
+    </>
   );
 }
 

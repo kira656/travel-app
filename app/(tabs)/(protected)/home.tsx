@@ -1,27 +1,57 @@
 
-import AppLayout from '@/components/AppLayout';
+import { FavoriteItem } from '@/apis/auth.types';
+import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
-import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 export default function Home() {
+  
   const router = useRouter();
   const { darkMode } = useThemeStore();
+  const { user, toggleFavorite, isFavorite,isLoggedIn } = useAuthStore(); // Add this line
+  
+  const handleFavoritePress = (item: FavoriteItem) => {
+    console.log('Favorite pressed - isLoggedIn:', isLoggedIn);
+    
+    if (!isLoggedIn) {
+      console.log('Showing login prompt');
+      Alert.alert(
+        'Login Required',
+        'Please login to save favorites',
+        [
+          { 
+            text: 'Cancel', 
+            style: 'cancel' 
+          },
+          { 
+            text: 'Login', 
+            onPress: () => router.push('/login') 
+          }
+        ]
+      );
+      return;
+    }
+    console.log('Toggling favorite');
+    toggleFavorite(item);
+  };
+
 
   const [activeTab, setActiveTab] = useState('flights');
   const [fontsLoaded] = useFonts({
-    'Poppins-Regular': require('../../assets/fonts/Poppins-Regular.ttf'),
+    'Poppins-Regular': require('../../../assets/fonts/Poppins-Regular.ttf'),
   });
 
   // Sample Data (remains the same)
@@ -31,7 +61,7 @@ export default function Home() {
       title: 'Beach Festival',
       location: 'Bali, Indonesia',
       date: '2023-12-15',
-      image: require('../../assets/images/beach.jpg'),
+      image: require('../../../assets/images/beach.jpg'),
       daysLeft: '12 days left'
     },
     {
@@ -39,7 +69,7 @@ export default function Home() {
       title: 'Mountain Trek',
       location: 'Swiss Alps',
       date: '2024-01-20',
-      image: require('../../assets/images/mountain.jpg'),
+      image: require('../../../assets/images/mountain.jpg'),
       daysLeft: 'Coming soon'
     },
     {
@@ -47,15 +77,15 @@ export default function Home() {
       title: 'City Marathon',
       location: 'New York, USA',
       date: '2023-11-30',
-      image: require('../../assets/images/marathon.jpg'),
+      image: require('../../../assets/images/marathon.jpg'),
       daysLeft: '3 days left'
     }
   ]);
 
   const popularDestinations = [
-    { id: '1', name: 'Paris', image: require('../../assets/images/paris.jpg'), price: '$399' },
-    { id: '2', name: 'Tokyo', image: require('../../assets/images/tokyo.jpg'), price: '$599' },
-    { id: '3', name: 'New York', image: require('../../assets/images/nyc.jpg'), price: '$299' },
+    { id: '1', name: 'Paris', image: require('../../../assets/images/paris.jpg'), price: '$399',type: 'destination' },
+    { id: '2', name: 'Tokyo', image: require('../../../assets/images/tokyo.jpg'), price: '$599',type: 'destination' },
+    { id: '3', name: 'New York', image: require('../../../assets/images/nyc.jpg'), price: '$299',type: 'destination' },
   ];
 
   const deals = [
@@ -63,12 +93,15 @@ export default function Home() {
     { id: '2', title: 'Beach Resorts', discount: '40% OFF', expiry: '5 days left' },
     { id: '3', title: 'Winter Getaway', discount: '25% Off', expiry: '1 week left' },
   ];
+  
+
 
   if (!fontsLoaded) return null;
 
   return (
-    <AppLayout showHeader={true} headerTitle="TravelApp">
+    
       <ScrollView showsVerticalScrollIndicator={false}>
+        
         {/* Hero Banner */}
         <View style={styles.heroContainer}>
           <View style={[styles.heroContent, darkMode && styles.heroContentDark]}>
@@ -87,7 +120,7 @@ export default function Home() {
         </View>
 
         {/* Booking Tabs */}
-        <View style={[styles.tabContainer, darkMode && styles.tabContainerDark]}>
+        {/* <View style={[styles.tabContainer, darkMode && styles.tabContainerDark]}>
           <TouchableOpacity
             style={[
               styles.tab,
@@ -135,7 +168,7 @@ export default function Home() {
               Hotels
             </Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* Popular Destinations */}
         <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Popular Destinations</Text>
@@ -145,56 +178,39 @@ export default function Home() {
           data={popularDestinations}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.destinationCard}>
+            <View style={[styles.destinationCard, darkMode && styles.darkCard]}>
               <Image source={item.image} style={styles.destinationImage} />
               <View style={styles.destinationInfo}>
-                <Text style={[styles.destinationName, darkMode && styles.darkText]}>{item.name}</Text>
-                <Text style={[styles.destinationPrice, darkMode && styles.darkSubtext]}>From {item.price}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.destinationList}
-        />
-
-        {/* Upcoming Events Section */}
-        <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Upcoming Events</Text>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={upcomingEvents}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={[styles.eventCard, darkMode && styles.eventCardDark]}>
-              <Image source={item.image} style={styles.eventImage} />
-              <View style={styles.eventDetails}>
-                <Text style={[styles.eventTitle, darkMode && styles.darkText]}>{item.title}</Text>
-                <View style={styles.eventInfoRow}>
-                  <MaterialIcons
-                    name="location-on"
-                    size={16}
-                    color={darkMode ? '#94a3b8' : '#64748b'}
-                  />
-                  <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext]}>
-                    {item.location}
+                <View style={styles.nameAndFavorite}>
+                  <Text style={[styles.destinationName, darkMode && styles.darkText]}>
+                    {item.name}
                   </Text>
+                  <TouchableOpacity
+                    onPress={() => handleFavoritePress({
+                      id: item.id,
+                      name: item.name,
+                      type: 'destination',
+                      price: item.price,
+                      image: item.image
+                    })}
+                    style={styles.favoriteButton}
+                  >
+                    <MaterialIcons
+                      name={isFavorite(item.id) ? "favorite" : "favorite-border"}
+                      size={24}
+                      color={
+                        isFavorite(item.id) 
+                          ? '#ef4444' // Always red when favorited
+                          : darkMode 
+                            ? '#e2e8f0' // Light gray in dark mode
+                            : '#334155' // Dark gray in light mode
+                      }
+                    />
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.eventInfoRow}>
-                  <MaterialIcons
-                    name="event"
-                    size={16}
-                    color={darkMode ? '#94a3b8' : '#64748b'}
-                  />
-                  <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext]}>
-                    {item.date} • {item.daysLeft}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.eventButton, darkMode && styles.eventButtonDark]}
-                // onPress={() => router.push(`/events/${item.id}`)}
-                >
-                  <Text style={styles.eventButtonText}>View Details</Text>
-                  <FontAwesome name="arrow-right" size={12} color="#fff" />
-                </TouchableOpacity>
+                <Text style={[styles.destinationPrice, darkMode && styles.darkSubtext]}>
+                  From {item.price}
+                </Text>
               </View>
             </View>
           )}
@@ -241,7 +257,7 @@ export default function Home() {
         <View style={{ height: 20 }} />
 
       </ScrollView>
-    </AppLayout>
+    
   );
 }
 
@@ -253,6 +269,69 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  darkCard: {
+    backgroundColor: '#1e293b',
+  },
+  darkText: {
+    color: '#f8fafc',
+  },
+  darkSubtext: {
+    color: '#94a3b8',
+  },
+  favoriteButton: {
+    marginLeft: 8,
+    padding: 4,
+  },
+  nameAndFavorite: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  destinationCard: {
+    width: 180,
+    marginRight: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  destinationImage: {
+    width: '100%',
+    height: 120,
+    resizeMode: 'cover',
+  },
+  destinationInfo: {
+    padding: 12,
+  },
+
+  destinationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    flex: 1,
+  },
+  favoriteIcon: {
+    marginLeft: 8,
+    padding: 4,
+  },
+  destinationPrice: {
+    fontSize: 14,
+    color: '#64748b',
+  },
+  // ... rest of your styles
+
+
+
+  destinationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
   heroContent: {
     flex: 1,
@@ -329,31 +408,9 @@ const styles = StyleSheet.create({
   destinationList: {
     paddingHorizontal: 16,
   },
-  destinationCard: {
-    width: 160,
-    marginRight: 12,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  destinationImage: {
-    width: '100%',
-    height: 120,
-    borderRadius: 8,
-  },
-  destinationInfo: {
-    padding: 8,
-  },
-  destinationName: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: '#1e293b',
-  },
-  destinationPrice: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 4,
-  },
+
+
+
   eventList: {
     paddingHorizontal: 16,
     paddingBottom: 30,
@@ -495,10 +552,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
   },
-  darkText: {
-    color: '#fff',
-  },
-  darkSubtext: {
-    color: '#a0a0a0',
-  },
+  // darkText: {
+  //   color: '#fff',
+  // },
+  // darkSubtext: {
+  //   color: '#a0a0a0',
+  // },
 });

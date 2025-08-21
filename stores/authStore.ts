@@ -3,35 +3,44 @@ import axios from 'axios';
 import { create } from 'zustand';
 
 import { authApi } from '@/apis/auth';
-import type { LoginDto, SignUpDto, User } from '@/apis/auth.types'; // Import Tokens here
-import * as storage from '@/lib/storage'; // Assuming this is your wrapper for AsyncStorage or similar
+import type { LoginDto, SignUpDto, User } from '@/apis/auth.types';
+import * as storage from '@/lib/storage';
 
 const TOKEN_KEY = 'access_token';
 const REFRESH_KEY = 'refresh_token';
 const USER_KEY = 'user';
 const LOGGEDIN_KEY = 'is_loggedin';
 
-// Define the shape of your Zustand store state
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  refreshToken: string | null;
-  isLoggedIn: boolean; // Keep this
-  isLoading: boolean;
+interface FavoriteItem {
+  id: string;
+  name: string;
+  type?: string;
+  image?: any; // You can add image reference if needed
+  price?: string; // Additional properties for display
 }
 
-// Define the shape of your Zustand store actions
+interface AuthState {
+  user: (User & { favorites: FavoriteItem[] }) | null;
+  
+  token: string | null;
+  refreshToken: string | null;
+  isLoggedIn: boolean;
+  isLoading: boolean;
+  
+}
+
 interface AuthActions {
   bootstrapAuth: () => Promise<void>;
-  // Updated persistAuth to ensure isLoggedIn is correctly set
   persistAuth: (token: string, refreshToken: string, user: User | null) => Promise<void>;
   clearAuth: () => Promise<void>;
   login: (dto: LoginDto) => Promise<void>;
   signUp: (dto: SignUpDto) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
+  toggleFavorite: (item: FavoriteItem) => Promise<void>;
+  isFavorite: (id: string) => boolean;
 }
 
-// Combine state and actions into the store's full interface
 type AuthStore = AuthState & AuthActions;
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -39,89 +48,98 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   token: null,
   refreshToken: null,
-  isLoggedIn: false, // Initial state, will be updated by bootstrapAuth
-  isLoading: true, // Start as true because we're bootstrapping auth
+  isLoggedIn: false,
+  isLoading: true,
+
+  
 
   // Actions
-// In your authStore.ts, ensure bootstrapAuth doesn't cause loops
-bootstrapAuth: async () => {
-  try {
-    const [storedAccess, storedRefresh, userJson] = await Promise.all([
-      storage.read(TOKEN_KEY),
-      storage.read(REFRESH_KEY),
-      storage.read(USER_KEY),
-    ]);
+  bootstrapAuth: async () => {
+    try {
+      const [storedAccess, storedRefresh, userJson] = await Promise.all([
+        storage.read(TOKEN_KEY),
+        storage.read(REFRESH_KEY),
+        storage.read(USER_KEY),
+      ]);
 
-    if (storedRefresh) {
-      try {
-        const freshTokens = await authApi.refresh(storedRefresh);
-        await get().persistAuth(freshTokens.accessToken, freshTokens.refreshToken, 
-          userJson ? JSON.parse(userJson) : null);
-      } catch (err) {
-        await get().clearAuth();
+      if (storedRefresh) {
+        try {
+          const freshTokens = await authApi.refresh(storedRefresh);
+          const user = userJson ? JSON.parse(userJson) : null;
+          // Ensure favorites array exists when bootstrapping
+          if (user && !user.favorites) {
+            user.favorites = [];
+          }
+          await get().persistAuth(freshTokens.accessToken, freshTokens.refreshToken, user);
+        } catch (err) {
+          await get().clearAuth();
+        }
+      } else {
+        set({ isLoading: false });
       }
-    } else {
-      set({ isLoading: false });
+    } catch (error) {
+      await get().clearAuth();
     }
-  } catch (error) {
-    await get().clearAuth();
-  }
-},
+  },
 
   persistAuth: async (token, refreshToken, user) => {
-    // Save all relevant auth data to storage
+    // Initialize favorites array if it doesn't exist
+    const userWithFavorites = user ? { 
+      ...user, 
+      favorites: user.favorites || [] 
+    } : null;
+
     await Promise.all([
       storage.save(TOKEN_KEY, token),
       storage.save(REFRESH_KEY, refreshToken),
-      storage.save(USER_KEY, JSON.stringify(user)),
-      storage.save(LOGGEDIN_KEY, 'true'), // Explicitly set isLoggedIn to 'true' in storage
+      storage.save(USER_KEY, JSON.stringify(userWithFavorites)),
+      storage.save(LOGGEDIN_KEY, 'true'),
     ]);
 
-    // Set Authorization header for Axios
     axios.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-    // Update Zustand state
     set({
-      user,
+      user: userWithFavorites,
       token,
       refreshToken,
-      isLoggedIn: true, // Set isLoggedIn to true
-      isLoading: false, // Loading is complete once authenticated
+      isLoggedIn: true,
+      isLoading: false,
     });
   },
 
   clearAuth: async () => {
-    // Remove all auth data from storage
     await Promise.all([
       storage.remove(TOKEN_KEY),
       storage.remove(REFRESH_KEY),
       storage.remove(USER_KEY),
-      storage.remove(LOGGEDIN_KEY), // Remove isLoggedIn from storage
+      storage.remove(LOGGEDIN_KEY),
     ]);
 
-    // Remove Authorization header from Axios
     delete axios.defaults.headers.common.Authorization;
 
-    // Reset Zustand state
     set({
       user: null,
       token: null,
       refreshToken: null,
-      isLoggedIn: false, // Set isLoggedIn to false
-      isLoading: false, // Loading is complete after clearing
+      isLoggedIn: false,
+      isLoading: false,
     });
   },
 
   login: async (dto) => {
     const { user, tokens } = await authApi.login(dto);
-    // Use persistAuth to consistently handle state and storage updates
-    await get().persistAuth(tokens.accessToken, tokens.refreshToken, user);
+    await get().persistAuth(tokens.accessToken, tokens.refreshToken, {
+      ...user,
+      favorites: user.favorites || [] // Initialize favorites if not present
+    });
   },
 
   signUp: async (dto) => {
     const { user, tokens } = await authApi.signUp(dto);
-    // Use persistAuth to consistently handle state and storage updates
-    await get().persistAuth(tokens.accessToken, tokens.refreshToken, user);
+    await get().persistAuth(tokens.accessToken, tokens.refreshToken, {
+      ...user,
+      favorites: [] // Initialize empty favorites array for new users
+    });
   },
 
   logout: async () => {
@@ -133,8 +151,67 @@ bootstrapAuth: async () => {
     } catch (e) {
       console.warn('Remote logout failed:', (e as Error).message);
     } finally {
-      // Always clear local auth regardless of remote logout success
       await get().clearAuth();
     }
+  },
+
+  updateUser: async (updates) => {
+    const { user } = get();
+    if (!user) return;
+
+    const updatedUser = { ...user, ...updates };
+    
+    // If we're updating favorites, make sure it's an array
+    if (updates.favorites && !Array.isArray(updates.favorites)) {
+      updatedUser.favorites = [];
+    }
+    
+    await storage.save(USER_KEY, JSON.stringify(updatedUser));
+    set({ user: updatedUser });
+  },
+
+  toggleFavorite: async (item) => {
+    console.log('[DEBUG] Starting toggleFavorite with item:', item);
+
+    const { user } = get();
+    console.log('[DEBUG] Current user:', user);
+
+    if (!user){
+      console.log('[DEBUG] No user found - aborting');
+    
+      return;
+    }
+
+    const currentFavorites = user.favorites || [];
+    console.log('[DEBUG] Current favorites:', currentFavorites);
+
+    const isFav = currentFavorites.some(fav => {
+      const match = fav.id === item.id;
+      console.log(`[DEBUG] Checking favorite ${fav.id} vs ${item.id}:`, match);
+      return match;
+    });
+    
+    const newFavorites = isFav
+    ? currentFavorites.filter(fav => {
+        const keep = fav.id !== item.id;
+        console.log(`[DEBUG] Filtering favorite ${fav.id}: keep?`, keep);
+        return keep;
+      })
+    : [...currentFavorites, item];
+  
+  console.log('[DEBUG] New favorites:', newFavorites);
+  
+  try {
+    await get().updateUser({ favorites: newFavorites });
+    console.log('[DEBUG] Successfully updated user favorites');
+  } catch (error) {
+    console.error('[DEBUG] Error updating favorites:', error);
+  }
+},
+
+  isFavorite: (id) => {
+    const { user } = get();
+    if (!user || !user.favorites) return false;
+    return user.favorites.some(fav => fav.id === id);
   },
 }));

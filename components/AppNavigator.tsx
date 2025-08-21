@@ -1,9 +1,9 @@
-import { useAuth } from '@/stores/authStore.ts'
+import { useAuthStore } from '@/stores/authStore'
 import { Ionicons } from '@expo/vector-icons'
 import { Stack, Tabs } from 'expo-router'
 
 export function AppNavigator() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn } = useAuthStore()
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

@@ -1,4 +1,13 @@
 // src/api/auth.types.ts
+export interface FavoriteItem {
+  id: string;
+  name: string;
+  type?: string;
+  // Add any other properties you need for favorites
+  image?: string | null; // assuming image is a URI
+  price?: string;
+}
+
 export interface User {
   id: string
   name: string
@@ -9,6 +18,8 @@ export interface User {
   avatar: string | null
   role: 'user' | 'admin'
   createdAt: string
+  favorites: FavoriteItem[]; // Add this line
+
 }
 
 export interface Tokens {

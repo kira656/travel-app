@@ -5,12 +5,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import {
-    Animated,
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -18,7 +18,7 @@ const { width, height } = Dimensions.get('window');
 export default function SplashScreen() {
   const router = useRouter();
   const { darkMode, toggleDarkMode } = useThemeStore();
-  
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -51,7 +51,11 @@ export default function SplashScreen() {
     router.push('/(auth)/signup');
   };
 
-  const gradientColors = darkMode 
+  const handleHome = () => {
+    router.push('/home');
+  };
+
+  const gradientColors = darkMode
     ? ['#1a1a2e', '#16213e', '#0f3460'] as const
     : ['#667eea', '#764ba2', '#f093fb'] as const;
 
@@ -74,7 +78,7 @@ export default function SplashScreen() {
           <MaterialIcons
             name={darkMode ? 'light-mode' : 'dark-mode'}
             size={24}
-            color={darkMode ? '#fff' : '#fff'}
+            color="#fff"
           />
         </TouchableOpacity>
 
@@ -100,15 +104,11 @@ export default function SplashScreen() {
             />
           </View>
 
-          {/* App Title */}
-          <Text style={[styles.title, darkMode && styles.darkTitle]}>
-            TravelApp
-          </Text>
+          {/* Title and Text */}
+          <Text style={[styles.title, darkMode && styles.darkTitle]}>TravelApp</Text>
           <Text style={[styles.subtitle, darkMode && styles.darkSubtitle]}>
             Explore the world with ease
           </Text>
-
-          {/* Description */}
           <Text style={[styles.description, darkMode && styles.darkDescription]}>
             Discover amazing destinations, book flights, find hotels, and create unforgettable memories
           </Text>
@@ -124,6 +124,7 @@ export default function SplashScreen() {
             },
           ]}
         >
+          {/* Login */}
           <TouchableOpacity
             style={[styles.loginButton, darkMode && styles.darkLoginButton]}
             onPress={handleLogin}
@@ -138,6 +139,7 @@ export default function SplashScreen() {
             </Text>
           </TouchableOpacity>
 
+          {/* Sign Up */}
           <TouchableOpacity
             style={[styles.signupButton, darkMode && styles.darkSignupButton]}
             onPress={handleSignup}
@@ -149,6 +151,21 @@ export default function SplashScreen() {
             />
             <Text style={styles.signupButtonText}>
               Sign Up
+            </Text>
+          </TouchableOpacity>
+
+          {/* Home */}
+          <TouchableOpacity
+            style={[styles.homeButton, darkMode && styles.darkHomeButton]}
+            onPress={handleHome}
+          >
+            <MaterialIcons
+              name="home"
+              size={20}
+              color={darkMode ? '#fff' : '#0a7ea4'}
+            />
+            <Text style={[styles.homeButtonText, darkMode && styles.darkHomeButtonText]}>
+              Go to Home
             </Text>
           </TouchableOpacity>
         </Animated.View>
@@ -289,6 +306,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
+  homeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    gap: 8,
+  },
+  darkHomeButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  homeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0a7ea4',
+  },
+  darkHomeButtonText: {
+    color: '#fff',
+  },
   footer: {
     paddingHorizontal: 40,
   },
@@ -300,4 +340,4 @@ const styles = StyleSheet.create({
   darkFooterText: {
     color: 'rgba(255, 255, 255, 0.7)',
   },
-}); 
+});
