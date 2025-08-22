@@ -1,4 +1,5 @@
 // app/_layout.tsx
+import SafeAreaView from '@/components/SafeAreaView';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import NetInfo from '@react-native-community/netinfo';
@@ -26,21 +27,33 @@ const InitialLayout = () => {
   const { isLoggedIn, isLoading } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const { darkMode } = useThemeStore();
 
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    // Allow the splash screen (root '/') to be shown without redirecting.
+    // When segments is empty (root), do not redirect here — let `app/index.tsx` handle it.
+    const currentRoot = segments[0];
+    const isRoot = !currentRoot; // true when at '/'
+    const inAuthGroup = currentRoot === '(auth)';
 
     if (isLoggedIn && inAuthGroup) {
-      // Correctly redirect to the protected group's root
-      router.replace('/(tabs)/(protected)/countries'); 
-    } else if (!isLoggedIn && !inAuthGroup) {
+      // Redirect logged-in users away from auth pages into protected area
+      router.replace('/(tabs)/(protected)/countries');
+    } else if (!isLoggedIn && !inAuthGroup && !isRoot) {
+      // Only redirect unauthenticated users if they are NOT on the root splash page
       router.replace('/(auth)/login');
     }
   }, [isLoggedIn, isLoading, segments, router]);
 
-  return <Slot />; // Slot is crucial here
+  // Wrap Slot in a themed SafeArea so background colors apply app-wide
+  return (
+    // Avoid forcing bottom safe-area padding at the root so tab navigator can handle it
+    <SafeAreaView style={{ flex: 1 }} backgroundColor={darkMode ? '#0b1220' : '#fff'} edges={['top', 'left', 'right']}>
+      <Slot />
+    </SafeAreaView>
+  );
 };
 
 export default function RootLayout() {

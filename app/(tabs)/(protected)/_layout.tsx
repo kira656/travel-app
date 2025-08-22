@@ -1,31 +1,27 @@
+import Drawer from '@/components/Drawer';
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Tabs, useRouter } from 'expo-router';
-import React from 'react';
+import { router, Tabs } from 'expo-router';
+import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Custom header component that includes the menu button, title, and theme toggle.
 // This is now native to the Tabs navigator header, not a separate View.
-const CustomHeader = ({ title }:{title:string}) => {
-  const router = useRouter();
+const CustomHeader = ({ title, onMenuPress }: { title: string; onMenuPress?: () => void }) => {
   const { darkMode, toggleDarkMode } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const iconColor = darkMode ? '#fff' : '#1e293b';
-  if(!title) title = "";
+  if (!title) title = '';
 
   return (
-    <View style={[styles.headerContainer, darkMode && styles.darkHeaderContainer]}>
-      {/* Drawer toggle button - you'll need to use a real drawer component later
-          or rely on a `Stack` navigator for this. For now, it's a placeholder. */}
-      <TouchableOpacity onPress={() => console.log('Open Drawer')} hitSlop={10}>
+    <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }, darkMode && styles.darkHeaderContainer]}>
+      <TouchableOpacity onPress={onMenuPress} hitSlop={10}>
         <MaterialIcons name="menu" size={28} color={iconColor} />
       </TouchableOpacity>
       <Text style={[styles.headerTitle, darkMode && styles.darkText]}>{title}</Text>
       <TouchableOpacity onPress={toggleDarkMode} hitSlop={10}>
-        <MaterialIcons
-          name={darkMode ? 'light-mode' : 'dark-mode'}
-          size={28}
-          color={iconColor}
-        />
+        <MaterialIcons name={darkMode ? 'light-mode' : 'dark-mode'} size={28} color={iconColor} />
       </TouchableOpacity>
     </View>
   );
@@ -34,16 +30,23 @@ const CustomHeader = ({ title }:{title:string}) => {
 export default function ProtectedLayout() {
   const { darkMode } = useThemeStore();
   const iconColor = darkMode ? '#fff' : '#1E293B';
+  const insets = useSafeAreaInsets();
+  const [drawerVisible, setDrawerVisible] = useState(false);
+
+  const openDrawer = () => setDrawerVisible(true);
+  const closeDrawer = () => setDrawerVisible(false);
 
   return (
+    <View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#fff' }}>
       <Tabs
         screenOptions={{
           headerShown: true, // We will show a custom header
-          header: ({ options }) => <CustomHeader title={options.title} />,
+          header: ({ options }) => <CustomHeader title={options.title!} onMenuPress={openDrawer} />,
           tabBarActiveTintColor: '#0a7ea4',
           tabBarInactiveTintColor: darkMode ? '#94a3b8' : '#64748b',
           tabBarStyle: [
             styles.tabBar,
+            { paddingBottom: insets.bottom || 8 },
             darkMode && styles.darkTabBar,
           ],
           tabBarLabelStyle: {
@@ -91,6 +94,25 @@ export default function ProtectedLayout() {
           options={{ href: null, title: 'Details' }}
         />
       </Tabs>
+
+      <Drawer visible={drawerVisible} onClose={closeDrawer}>
+        <TouchableOpacity onPress={() => { closeDrawer(); }} style={{ paddingVertical: 12 }}>
+          <Text>Close</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { router.push('/(tabs)/(protected)/home');closeDrawer(); }} style={{ paddingVertical: 12 }}>
+          <Text>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { router.push('/(tabs)/(protected)/countries'); closeDrawer(); }} style={{ paddingVertical: 12 }}>
+          <Text>Countries</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { router.push('/(tabs)/(protected)/profile'); closeDrawer(); }} style={{ paddingVertical: 12 }}>
+          <Text>Profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { router.push('/(tabs)/(protected)/favorites'); closeDrawer(); }} style={{ paddingVertical: 12 }}>
+          <Text>Favorates</Text>
+        </TouchableOpacity>
+      </Drawer>
+    </View>
   );
 }
 

@@ -1,5 +1,4 @@
 import { citiesApi } from '@/apis/cities';
-import { MapView, Marker } from '@/components/MapView'; // Import the new MapView component
 import SafeAreaView from '@/components/SafeAreaView';
 import { useThemeStore } from '@/stores/themeStore';
 import { getImageUrl } from '@/utils/imageUtils';
@@ -18,6 +17,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 
 export default function CityDetails() {
   const router = useRouter();
@@ -83,8 +83,13 @@ export default function CityDetails() {
       </SafeAreaView>
     );
   }
-
-  const [lng, lat] = cityData.center;
+  console.log(cityData);
+  // City API returns [longitude, latitude] — be defensive when reading values
+  const rawCenter = Array.isArray(cityData.center) ? cityData.center : [undefined, undefined];
+  const [lng, lat] = rawCenter;
+  // Ensure we have numeric coords
+  const latNum = typeof lat === 'number' ? lat : parseFloat(String(lat)) || undefined;
+  const lngNum = typeof lng === 'number' ? lng : parseFloat(String(lng)) || undefined;
   const mainImageUrl = cityData.mainImage ? getImageUrl(cityData.mainImage) : null;
   const transportRate = cityData.distanceRates[0]?.transportRatePerKm;
 
@@ -176,26 +181,41 @@ export default function CityDetails() {
           <View style={[styles.mapCard, themeStyles.card]}>
             <Text style={[styles.mapTitle, themeStyles.text]}>Location</Text>
             {Platform.OS === 'web' ? (
-              <Text style={[styles.webFallback, themeStyles.subtext]}>
-                Map view is not supported on web.
-              </Text>
-            ) : (
-              <MapView
-                style={styles.map}
-                initialRegion={{
-                  latitude: lat,
-                  longitude: lng,
-                  latitudeDelta: 0.1,
-                  longitudeDelta: 0.1,
-                }}
-              >
-                <Marker
-                  coordinate={{ latitude: lat, longitude: lng }}
-                  title={cityData.name}
-                  description={cityData.description}
-                />
-              </MapView>
-            )}
+  <Text style={[styles.webFallback, themeStyles.subtext]}>
+    Map view is not supported on web.
+  </Text>
+) : (<View style={[styles.mapCard, themeStyles.card]}>
+  <Text style={[styles.mapTitle, themeStyles.text]}>Location</Text>
+  {(typeof latNum === 'number' && typeof lngNum === 'number') ? (
+    <View style={{ height: 400, width: '100%', borderRadius: 8, overflow: 'hidden' }}>
+<MapView
+    style={{ flex: 1 }}
+    mapType="standard"   // hide Apple/Google base
+    zoomEnabled={true}
+    scrollEnabled={true}
+    pitchEnabled={true}
+    rotateEnabled={true}
+    showsUserLocation={true}
+    showsMyLocationButton={true}
+    showsCompass={true}
+    initialRegion={{
+      latitude: 41.8933203,
+      longitude: 12.4829321,
+      latitudeDelta: 0.1,
+      longitudeDelta: 0.1,
+    }}
+  >
+    <Marker coordinate={{ latitude: 41.8933203, longitude: 12.4829321 }} />
+  </MapView>
+    </View>
+  ) : (
+    <View style={[styles.imagePlaceholder, themeStyles.card]}>
+      <Text style={themeStyles.subtext}>Map unavailable for this device.</Text>
+    </View>
+  )}
+</View>
+)}
+
           </View>
         </View>
       </ScrollView>
