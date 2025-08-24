@@ -1,4 +1,5 @@
 import { citiesApi } from '@/apis/cities';
+import MapView, { Marker } from '@/components/MapShim';
 import SafeAreaView from '@/components/SafeAreaView';
 import { useThemeStore } from '@/stores/themeStore';
 import { getImageUrl } from '@/utils/imageUtils';
@@ -17,7 +18,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 
 export default function CityDetails() {
   const router = useRouter();
@@ -186,7 +186,7 @@ export default function CityDetails() {
   </Text>
 ) : (<View style={[styles.mapCard, themeStyles.card]}>
   <Text style={[styles.mapTitle, themeStyles.text]}>Location</Text>
-  {(typeof latNum === 'number' && typeof lngNum === 'number') ? (
+  {( Platform.OS === 'ios' || Platform.OS === 'android' || (typeof latNum === 'number' && typeof lngNum === 'number')) ? (
     <View style={{ height: 400, width: '100%', borderRadius: 8, overflow: 'hidden' }}>
 <MapView
     style={{ flex: 1 }}
