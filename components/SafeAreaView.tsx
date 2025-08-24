@@ -26,10 +26,10 @@ export const SafeAreaView: React.FC<SafeAreaViewProps> = ({
     );
   }
 
-  // Use the built-in SafeAreaView for automatic handling
+  // Ensure the safe area view fills the full screen and applies background color
   return (
     <RNSafeAreaView
-      style={[{ backgroundColor }, style]}
+      style={[{ backgroundColor, flex: 1, paddingTop: edges.includes('top') ? insets.top : 0, paddingBottom: edges.includes('bottom') ? insets.bottom : 0 }, style]}
       edges={edges}
     >
       {children}

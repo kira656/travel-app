@@ -100,7 +100,7 @@ export default function Home() {
 
   return (
     
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.bgWhite, darkMode && styles.bgDark]} showsVerticalScrollIndicator={false}>
         
         {/* Hero Banner */}
         <View style={styles.heroContainer}>
@@ -264,6 +264,8 @@ export default function Home() {
 
 // --- Stylesheet definition ---
 const styles = StyleSheet.create({
+  bgDark:{backgroundColor: '#1e293b',},
+  bgWhite:{},
   heroContainer: {
     height: 200,
     margin: 16,
