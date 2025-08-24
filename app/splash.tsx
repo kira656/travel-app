@@ -52,7 +52,7 @@ export default function SplashScreen() {
   };
 
   const handleHome = () => {
-    router.push('/home');
+    router.push('/(tabs)/(protected)/home');
   };
 
   const gradientColors = darkMode
