@@ -264,7 +264,7 @@ export default function Home() {
 
 // --- Stylesheet definition ---
 const styles = StyleSheet.create({
-  bgDark:{backgroundColor: '#1e293b',},
+  bgDark:{backgroundColor: '#0f172a',},
   bgWhite:{},
   heroContainer: {
     height: 200,
@@ -274,12 +274,19 @@ const styles = StyleSheet.create({
   },
   darkCard: {
     backgroundColor: '#1e293b',
+    borderColor: '#334155',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   darkText: {
     color: '#f8fafc',
   },
   darkSubtext: {
-    color: '#94a3b8',
+    color: '#cbd5e1',
   },
   favoriteButton: {
     marginLeft: 8,
@@ -428,6 +435,13 @@ const styles = StyleSheet.create({
   },
   eventCardDark: {
     backgroundColor: '#1e293b',
+    borderColor: '#334155',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   eventImage: {
     width: '100%',
@@ -485,6 +499,13 @@ const styles = StyleSheet.create({
   },
   dealCardDark: {
     backgroundColor: '#1e293b',
+    borderColor: '#334155',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   dealBadge: {
     backgroundColor: '#3b82f6',
@@ -522,6 +543,13 @@ const styles = StyleSheet.create({
   },
   cabContainerDark: {
     backgroundColor: '#1e293b',
+  borderColor: '#334155',
+  borderWidth: 1,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 6,
+  elevation: 4,
   },
   cabTextContainer: {
     flex: 1,
@@ -554,10 +582,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 14,
   },
-  // darkText: {
-  //   color: '#fff',
-  // },
-  // darkSubtext: {
-  //   color: '#a0a0a0',
-  // },
+
 });

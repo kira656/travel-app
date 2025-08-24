@@ -156,7 +156,7 @@ export default function CountriesScreen() {
   }
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#ffffff' }}>
       {/* Search Bar */}
       <View style={styles.searchSection}>
         <View style={[styles.searchContainer, darkMode && styles.darkSearchContainer]}>
@@ -187,7 +187,7 @@ export default function CountriesScreen() {
           )}
         </View>
       </View>
-
+  
       {/* Countries List */}
       <FlatList
         data={filteredCountries}
@@ -220,8 +220,9 @@ export default function CountriesScreen() {
           </View>
         }
       />
-    </>
+    </View>
   );
+  
 }
 
 const styles = StyleSheet.create({

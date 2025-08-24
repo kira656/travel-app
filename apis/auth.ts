@@ -63,8 +63,10 @@ export const authApi = {
         '/auth/login',
         dto // JSON body — axios stringifies & sets header automatically :contentReference[oaicite:0]{index=0}
       )
+      console.log("before")
       return res.data
     } catch (err) {
+      console.log("after")
       throw normaliseError(err)
     }
   },

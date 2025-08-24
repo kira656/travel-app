@@ -3,19 +3,14 @@ import SafeAreaView from '@/components/SafeAreaView';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import NetInfo from '@react-native-community/netinfo';
-import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
-import { Slot } from 'expo-router';
+import { QueryClient, QueryClientProvider, focusManager, onlineManager } from '@tanstack/react-query';
+import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, AppStateStatus, Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const queryClient = new QueryClient();
 
-<<<<<<< HEAD
-onlineManager.setEventListener((setOnline) =>
-  NetInfo.addEventListener((state) => setOnline(!!state.isConnected))
-);
-=======
 onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {
     setOnline(!!state.isConnected);
@@ -60,7 +55,6 @@ const InitialLayout = () => {
     </SafeAreaView>
   );
 };
->>>>>>> 1c5dcb411cdf6b3e4c4ef5ddd536117b444362ea
 
 export default function RootLayout() {
   const bootstrapAuth = useAuthStore((s) => s.bootstrapAuth);

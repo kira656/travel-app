@@ -71,19 +71,24 @@ export default function CountryDetails() {
         style={styles.container} 
         backgroundColor={isDarkMode ? '#121212' : '#fff'}
       >
-        <View style={styles.header}>
+        {/* <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
             <MaterialIcons name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#1e293b'} />
           </Pressable>
           <Text style={[styles.title, isDarkMode && styles.darkText]}>Loading...</Text>
           <View style={{ width: 28 }} />
-        </View>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={isDarkMode ? '#0a7ea4' : '#0a7ea4'} />
-          <Text style={[styles.loadingText, isDarkMode && styles.darkText]}>
-            Loading country details...
-          </Text>
-        </View>
+        </View> */}
+<SafeAreaView style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#ffffff' }}>
+  <View style={[styles.centerContainer]}>
+    <ActivityIndicator size="large" color="#0a7ea4" />
+    <Text style={[styles.loadingText, isDarkMode && styles.darkText]}>
+      Loading country details...
+    </Text>
+  </View>
+</SafeAreaView>
+
+
+
       </SafeAreaView>
     );
   }
@@ -94,13 +99,13 @@ export default function CountryDetails() {
         style={styles.container} 
         backgroundColor={isDarkMode ? '#121212' : '#fff'}
       >
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
+        {/* <View style={styles.header}>
+          {/* <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
             <MaterialIcons name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#1e293b'} />
           </Pressable>
           <Text style={[styles.title, isDarkMode && styles.darkText]}>Error</Text>
           <View style={{ width: 28 }} />
-        </View>
+        </View> */} 
         <View style={styles.centerContainer}>
           <MaterialIcons 
             name="error-outline" 
@@ -124,13 +129,13 @@ export default function CountryDetails() {
         style={styles.container} 
         backgroundColor={isDarkMode ? '#121212' : '#fff'}
       >
-        <View style={styles.header}>
+        {/* <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
             <MaterialIcons name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#1e293b'} />
           </Pressable>
           <Text style={[styles.title, isDarkMode && styles.darkText]}>Invalid Country</Text>
           <View style={{ width: 28 }} />
-        </View>
+        </View> */}
         <View style={styles.centerContainer}>
           <MaterialIcons 
             name="error-outline" 

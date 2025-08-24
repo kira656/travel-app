@@ -26,134 +26,96 @@ export default function ProfileScreen() {
   };
 
   const profileOptions = [
-    {
-      id: 'personal',
-      title: 'Personal Information',
-      icon: 'person',
-      onPress: () => router.push('/account/personal'),
-    },
-    {
-      id: 'bookings',
-      title: 'My Bookings',
-      icon: 'flight',
-      onPress: () => console.log('My Bookings'),
-    },
-    {
-      id: 'favorites',
-      title: 'Favorites',
-      icon: 'favorite',
-      onPress: () => console.log('Favorites'),
-    },
-    {
-      id: 'settings',
-      title: 'Settings',
-      icon: 'settings',
-      onPress: () => router.push('/account/settings'),
-    },
-    {
-      id: 'help',
-      title: 'Help & Support',
-      icon: 'help',
-      onPress: () => console.log('Help & Support'),
-    },
+    { id: 'personal', title: 'Personal Information', icon: 'person', onPress: () => router.push('/account/personal') },
+    { id: 'bookings', title: 'My Bookings', icon: 'flight', onPress: () => console.log('My Bookings') },
+    { id: 'favorites', title: 'Favorites', icon: 'favorite', onPress: () => console.log('Favorites') },
+    { id: 'settings', title: 'Settings', icon: 'settings', onPress: () => router.push('/account/settings') },
+    { id: 'help', title: 'Help & Support', icon: 'help', onPress: () => console.log('Help & Support') },
   ];
 
+  const backgroundColor = darkMode ? '#0b1220' : '#ffffff';
+  const cardColor = darkMode ? '#1e293b' : '#f8fafc';
+  const borderColor = darkMode ? '#334155' : '#e2e8f0';
+
   return (
-    
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View style={[styles.profileHeader, darkMode && styles.darkProfileHeader]}>
-          <View style={[styles.avatarContainer, darkMode && styles.darkAvatarContainer]}>
-            <MaterialIcons
-              name="person"
-              size={48}
-              color={darkMode ? '#0a7ea4' : '#0a7ea4'}
-            />
-          </View>
-          <Text style={[styles.userName, darkMode && styles.darkText]}>
-            {user?.name || 'Travel User'}
-          </Text>
-          <Text style={[styles.userEmail, darkMode && styles.darkSubtext]}>
-            {user?.email || 'user@example.com'}
-          </Text>
+    <ScrollView style={[styles.container, { backgroundColor }]} showsVerticalScrollIndicator={false}>
+      
+      {/* Profile Header */}
+      <View style={[styles.profileHeader, { backgroundColor, borderColor }]}>
+      <View style={[styles.avatarContainer, { backgroundColor: borderColor }]}>
+          <MaterialIcons name="person" size={48} color="#0a7ea4" />
         </View>
+        <Text style={[styles.userName, darkMode && styles.darkText]}>
+          {user?.name || 'Travel User'}
+        </Text>
+        <Text style={[styles.userEmail, darkMode && styles.darkSubtext]}>
+          {user?.email || 'user@example.com'}
+        </Text>
+      </View>
 
-        {/* Profile Options */}
-        <View style={styles.optionsContainer}>
-          {profileOptions.map((option) => (
-            <TouchableOpacity
-              key={option.id}
-              style={[styles.optionItem, darkMode && styles.darkOptionItem]}
-              onPress={option.onPress}
-            >
-              <View style={styles.optionLeft}>
-                <MaterialIcons
-                  name={option.icon as any}
-                  size={24}
-                  color={darkMode ? '#0a7ea4' : '#0a7ea4'}
-                />
-                <Text style={[styles.optionTitle, darkMode && styles.darkText]}>
-                  {option.title}
-                </Text>
-              </View>
-              <MaterialIcons
-                name="chevron-right"
-                size={20}
-                color={darkMode ? '#666' : '#999'}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
+      {/* Profile Options */}
+      <View style={styles.optionsContainer}>
+        {profileOptions.map((option) => (
+          <TouchableOpacity
+            key={option.id}
+            style={[
+              styles.optionItem,
+              { backgroundColor: cardColor, borderColor },
+              darkMode && styles.darkShadow,
+            ]}
+            onPress={option.onPress}
+          >
+            <View style={styles.optionLeft}>
+              <MaterialIcons name={option.icon as any} size={24} color="#0a7ea4" />
+              <Text style={[styles.optionTitle, darkMode && styles.darkText]}>
+                {option.title}
+              </Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={20} color={darkMode ? '#94a3b8' : '#64748b'} />
+          </TouchableOpacity>
+        ))}
+      </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={[styles.logoutButton, darkMode && styles.darkLogoutButton]}
-          onPress={handleLogout}
-        >
-          <MaterialIcons
-            name="logout"
-            size={20}
-            color="#ff6b6b"
-          />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+      {/* Logout Button */}
+      <TouchableOpacity
+        style={[
+          styles.logoutButton,
+          { backgroundColor: cardColor, borderColor },
+          darkMode && styles.darkShadow,
+        ]}
+        onPress={handleLogout}
+      >
+        <MaterialIcons name="logout" size={20} color="#ff6b6b" />
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
 
-        {/* App Version */}
-        <View style={styles.versionContainer}>
-          <Text style={[styles.versionText, darkMode && styles.darkSubtext]}>
-            TravelApp v1.0.0
-          </Text>
-        </View>
-      </ScrollView>
-    
+      {/* App Version */}
+      <View style={styles.versionContainer}>
+        <Text style={[styles.versionText, darkMode && styles.darkSubtext]}>
+          TravelApp v1.0.0
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+
   profileHeader: {
     alignItems: 'center',
     paddingVertical: 30,
     paddingHorizontal: 20,
-    backgroundColor: '#f8fafc',
     marginBottom: 20,
-  },
-  darkProfileHeader: {
-    backgroundColor: '#1e293b',
+   // borderBottomWidth: 1,
   },
   avatarContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  darkAvatarContainer: {
-    backgroundColor: '#334155',
   },
   userName: {
     fontSize: 20,
@@ -165,6 +127,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
+
   optionsContainer: {
     paddingHorizontal: 20,
   },
@@ -174,20 +137,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  darkOptionItem: {
-    backgroundColor: '#1e293b',
+    borderWidth: 1,
   },
   optionLeft: {
     flexDirection: 'row',
@@ -198,27 +150,17 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginLeft: 12,
   },
+
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    backgroundColor: '#fff',
     borderRadius: 12,
     marginHorizontal: 20,
     marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  darkLogoutButton: {
-    backgroundColor: '#1e293b',
+    borderWidth: 1,
   },
   logoutText: {
     fontSize: 16,
@@ -226,6 +168,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '600',
   },
+
   versionContainer: {
     alignItems: 'center',
     paddingVertical: 30,
@@ -234,10 +177,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748b',
   },
-  darkText: {
-    color: '#fff',
-  },
-  darkSubtext: {
-    color: '#9BA1A6',
+
+  darkText: { color: '#f8fafc' },
+  darkSubtext: { color: '#94a3b8' },
+  darkShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });
