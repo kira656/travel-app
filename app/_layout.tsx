@@ -60,7 +60,7 @@ export default function RootLayout() {
   const bootstrapAuth = useAuthStore((s) => s.bootstrapAuth);
   const isLoadingAuth = useAuthStore((s) => s.isLoading);
   const loadTheme = useThemeStore((s) => s.loadTheme);
-  const isThemeReady = useThemeStore((s) => s.isReady ?? true); // adjust if you track this
+  const isThemeReady = true; // adjust if you track this
 
   useEffect(() => {
     bootstrapAuth();

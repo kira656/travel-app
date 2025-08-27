@@ -31,6 +31,10 @@ export interface City {
 }
 
 export interface Country {
+  reviews: any[];
+  reviewsCount: number;
+  favouritesCount: any;
+  favourites: any;
   id: number;
   code: string;
   name: string;

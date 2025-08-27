@@ -4,11 +4,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 export default function ProfileScreen() {
@@ -27,8 +27,9 @@ export default function ProfileScreen() {
 
   const profileOptions = [
     { id: 'personal', title: 'Personal Information', icon: 'person', onPress: () => router.push('/account/personal') },
+    { id: 'balance', title: 'Balance', icon: 'account-balance_wallet', onPress: () => router.push('/(tabs)/(protected)/balance') },
     { id: 'bookings', title: 'My Bookings', icon: 'flight', onPress: () => console.log('My Bookings') },
-    { id: 'favorites', title: 'Favorites', icon: 'favorite', onPress: () => console.log('Favorites') },
+    { id: 'favorites', title: 'Favorites', icon: 'favorite', onPress: () => router.push('/(tabs)/(protected)/favorites') },
     { id: 'settings', title: 'Settings', icon: 'settings', onPress: () => router.push('/account/settings') },
     { id: 'help', title: 'Help & Support', icon: 'help', onPress: () => console.log('Help & Support') },
   ];

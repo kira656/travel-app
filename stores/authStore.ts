@@ -4,6 +4,7 @@ import { create } from 'zustand';
 
 import { authApi } from '@/apis/auth';
 import type { LoginDto, SignUpDto, User } from '@/apis/auth.types';
+import { favouritesApi } from '@/apis/favourites';
 import * as storage from '@/lib/storage';
 
 const TOKEN_KEY = 'access_token';
@@ -19,8 +20,26 @@ interface FavoriteItem {
   price?: string; // Additional properties for display
 }
 
+function flattenFavourites(items: any): FavoriteItem[] {
+  if (!items) return [];
+  if (Array.isArray(items)) return items;
+  const flat: FavoriteItem[] = [];
+  Object.keys(items).forEach((type) => {
+    const arr = items[type] || [];
+    arr.forEach((it: any) => {
+      flat.push({
+        id: String(it.entityId ?? it.id ?? ''),
+        name: it.title || it.name || '',
+        type,
+        image: it.mainImage?.url ?? null,
+      });
+    });
+  });
+  return flat;
+}
+
 interface AuthState {
-  user: (User & { favorites: FavoriteItem[] }) | null;
+    user: (User & { favourites: FavoriteItem[] }) | null;
   
   token: string | null;
   refreshToken: string | null;
@@ -39,6 +58,8 @@ interface AuthActions {
   updateUser: (updates: Partial<User>) => Promise<void>;
   toggleFavorite: (item: FavoriteItem) => Promise<void>;
   isFavorite: (id: string) => boolean;
+  isFavoriteByType: (type: string | undefined, id: any) => boolean;
+  fetchFavorites: () => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -66,9 +87,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         try {
           const freshTokens = await authApi.refresh(storedRefresh);
           const user = userJson ? JSON.parse(userJson) : null;
-          // Ensure favorites array exists when bootstrapping
-          if (user && !user.favorites) {
-            user.favorites = [];
+          // Normalize favourites shape when bootstrapping
+          if (user) {
+            user.favourites = flattenFavourites(user.favourites || (user as any).favourites);
           }
           await get().persistAuth(freshTokens.accessToken, freshTokens.refreshToken, user);
         } catch (err) {
@@ -83,23 +104,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   persistAuth: async (token, refreshToken, user) => {
-    // Initialize favorites array if it doesn't exist
-    const userWithFavorites = user ? { 
-      ...user, 
-      favorites: user.favorites || [] 
-    } : null;
+    // Initialize favourites array and normalize shape if needed
+    const userWithFavourites = user
+      ? { ...user, favourites: flattenFavourites(user.favourites || (user as any).favourites), balance: (user as any).wallets?.balance ?? (user as any).balance ?? 0 }
+      : null;
 
     await Promise.all([
       storage.save(TOKEN_KEY, token),
       storage.save(REFRESH_KEY, refreshToken),
-      storage.save(USER_KEY, JSON.stringify(userWithFavorites)),
+      storage.save(USER_KEY, JSON.stringify(userWithFavourites)),
       storage.save(LOGGEDIN_KEY, 'true'),
     ]);
 
     axios.defaults.headers.common.Authorization = `Bearer ${token}`;
 
     set({
-      user: userWithFavorites,
+      user: userWithFavourites,
       token,
       refreshToken,
       isLoggedIn: true,
@@ -128,18 +148,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   login: async (dto) => {
     const { user, tokens } = await authApi.login(dto);
-    await get().persistAuth(tokens.accessToken, tokens.refreshToken, {
-      ...user,
-      favorites: user.favorites || [] // Initialize favorites if not present
-    });
+    console.log("user",user)
+    const normalizedUser = { ...user, favourites: flattenFavourites(user.favourites || (user as any).favourites) };
+    await get().persistAuth(tokens.accessToken, tokens.refreshToken, normalizedUser);
   },
 
   signUp: async (dto) => {
     const { user, tokens } = await authApi.signUp(dto);
-    await get().persistAuth(tokens.accessToken, tokens.refreshToken, {
-      ...user,
-      favorites: [] // Initialize empty favorites array for new users
-    });
+    await get().persistAuth(tokens.accessToken, tokens.refreshToken, { ...user, favourites: [] });
   },
 
   logout: async () => {
@@ -161,9 +177,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     const updatedUser = { ...user, ...updates };
     
-    // If we're updating favorites, make sure it's an array
-    if (updates.favorites && !Array.isArray(updates.favorites)) {
-      updatedUser.favorites = [];
+    // If we're updating favourites, normalize to flat array
+    if ((updates as any).favourites) {
+      (updatedUser as any).favourites = flattenFavourites((updates as any).favourites);
     }
     
     await storage.save(USER_KEY, JSON.stringify(updatedUser));
@@ -171,47 +187,75 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   toggleFavorite: async (item) => {
-    console.log('[DEBUG] Starting toggleFavorite with item:', item);
+    // Toggle favorite locally and then sync with server
+    const { user, fetchFavorites } = get();
 
-    const { user } = get();
-    console.log('[DEBUG] Current user:', user);
+    if (!user) return;
 
-    if (!user){
-      console.log('[DEBUG] No user found - aborting');
-    
-      return;
+    // Local optimistic toggle detection (ensure favourites is an array)
+    const currentFavourites = Array.isArray((user as any).favourites)
+      ? (user as any).favourites
+      : flattenFavourites((user as any).favourites);
+    const isFav = currentFavourites.some(
+      (fav: any) => String(fav.id) === String(item.id) && fav.type === item.type
+    );
+
+    try {
+      const token = get().token ?? undefined;
+      if (isFav) {
+        // remove favourite on server
+        await favouritesApi.removeFavourite({ entityType: (item.type as any) || 'unknown', entityId: item.id }, token);
+      } else {
+        // add favourite on server
+        await favouritesApi.addFavourite({ entityType: (item.type as any) || 'unknown', entityId: item.id }, token);
+      }
+
+      // Refetch authoritative favourites from server and update store
+      if (fetchFavorites) await fetchFavorites();
+    } catch (err) {
+      // If server call fails, refetch to ensure consistency
+      if (fetchFavorites) await fetchFavorites();
+      console.error('Failed to toggle favorite on server:', err);
     }
-
-    const currentFavorites = user.favorites || [];
-    console.log('[DEBUG] Current favorites:', currentFavorites);
-
-    const isFav = currentFavorites.some(fav => {
-      const match = fav.id === item.id;
-      console.log(`[DEBUG] Checking favorite ${fav.id} vs ${item.id}:`, match);
-      return match;
-    });
-    
-    const newFavorites = isFav
-    ? currentFavorites.filter(fav => {
-        const keep = fav.id !== item.id;
-        console.log(`[DEBUG] Filtering favorite ${fav.id}: keep?`, keep);
-        return keep;
-      })
-    : [...currentFavorites, item];
-  
-  console.log('[DEBUG] New favorites:', newFavorites);
-  
-  try {
-    await get().updateUser({ favorites: newFavorites });
-    console.log('[DEBUG] Successfully updated user favorites');
-  } catch (error) {
-    console.error('[DEBUG] Error updating favorites:', error);
-  }
-},
+  },
 
   isFavorite: (id) => {
     const { user } = get();
-    if (!user || !user.favorites) return false;
-    return user.favorites.some(fav => fav.id === id);
+    if (!user || !Array.isArray((user as any).favourites)) return false;
+    return (user as any).favourites.some((fav: any) => fav.id === id);
+  },
+  
+  // Check favorite by type + id without hitting the server
+  isFavoriteByType: (type: string | undefined, id: any) => {
+    const { user } = get();
+    if (!user || !Array.isArray((user as any).favourites)) return false;
+    return (user as any).favourites.some((fav: any) => fav.type === type && String(fav.id) === String(id));
+  },
+
+  // Fetch favourites/me from server and sync into store
+  fetchFavorites: async () => {
+    try {
+      const token = get().token ?? undefined;
+      const res = await favouritesApi.getMyFavourites(token);
+      const items = res.items || {};
+
+      const flat: any[] = [];
+      Object.keys(items).forEach((type) => {
+        const arr = items[type] || [];
+        arr.forEach((it: any) => {
+          flat.push({
+            id: String(it.entityId ?? it.id ?? ''),
+            name: it.title || it.name || '',
+            type,
+            image: it.mainImage?.url ?? null,
+            raw: it,
+          });
+        });
+      });
+
+      await get().updateUser({ favourites: flat });
+    } catch (err) {
+      console.error('Failed to fetch favourites:', err);
+    }
   },
 }));

@@ -66,7 +66,7 @@ export const authApi = {
       console.log("before")
       return res.data
     } catch (err) {
-      console.log("after")
+      console.log("after",err)
       throw normaliseError(err)
     }
   },

@@ -1,7 +1,8 @@
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface FavoriteItem {
   id: string;
@@ -11,40 +12,67 @@ interface FavoriteItem {
 
 export default function Favorites() {
   const { darkMode } = useThemeStore();
-  const { user, toggleFavorite } = useAuthStore();
+  const { user, toggleFavorite, fetchFavorites } = useAuthStore();
 
-  // Get favorites directly from user object
-  const favorites = user?.favorites || [];
+  // Get favorites directly from user object (support API `favourites` or store `favorites`)
+  const favorites = user?.favourites || (user as any)?.favourites || [];
 
-  const handleRemoveFavorite = (item: FavoriteItem) => {
-    toggleFavorite(item); // This will update both local and global state
+  // Tabs: all | country | city | hotel | poi | trip
+  const tabs = ['All', 'Countries', 'Cities', 'Hotels', 'POI', 'Trips'];
+  const [activeTab, setActiveTab] = useState('All');
+
+  // Filter client-side based on active tab (no fetching)
+  const visibleItems = useMemo(() => {
+    if (activeTab === 'All') return favorites;
+    const map: Record<string, string> = {
+      Countries: 'country',
+      Cities: 'city',
+      Hotels: 'hotel',
+      POI: 'poi',
+      Trips: 'trip',
+    };
+    const type = map[activeTab] || '';
+    return favorites.filter((f: any) => String(f.type).toLowerCase() === type);
+  }, [activeTab, favorites]);
+
+  // Fetch user's favourites when opening the screen
+  React.useEffect(() => {
+    fetchFavorites().catch(() => {});
+  }, [fetchFavorites]);
+
+  const handleRemoveFavorite = async (item: FavoriteItem) => {
+    await toggleFavorite(item); // toggleFavorite calls server then refetches store
   };
 
   return (
    
       <View style={[styles.container, darkMode && styles.darkContainer]}>
-        {favorites.length > 0 ? (
+        {/* Tabs header */}
+        <View style={styles.tabsContainer}>
+          {tabs.map((t) => (
+            <TouchableOpacity key={t} onPress={() => setActiveTab(t)} style={[styles.tabButton, activeTab === t && styles.activeTabButton]}>
+              <Text style={[styles.tabText, activeTab === t && styles.activeTabText]}>{t}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {visibleItems.length > 0 ? (
           <FlatList
-            data={favorites}
+            data={visibleItems}
+            numColumns={2}
+            columnWrapperStyle={{ justifyContent: 'space-between' }}
             renderItem={({ item }) => (
-              <View style={[styles.favoriteItem, darkMode && styles.darkFavoriteItem]}>
-                <View style={styles.favoriteInfo}>
-                  <Text style={[styles.favoriteName, darkMode && styles.darkText]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.favoriteType, darkMode && styles.darkSubtext]}>
-                    {item.type || 'destination'}
-                  </Text>
-                </View>
-                <TouchableOpacity 
-                  onPress={() => handleRemoveFavorite(item)}
-                  style={styles.removeButton}
-                >
-                  <MaterialIcons 
-                    name="favorite" 
-                    size={24} 
-                    color={darkMode ? '#ef4444' : '#dc2626'} 
-                  />
+              <View style={[styles.card, darkMode && styles.darkCard]}>
+                <Image
+                  source={
+                    item.image
+                      ? { uri: `${process.env.EXPO_PUBLIC_IMAGES_URL}${item.image}` }
+                      : undefined
+                  }
+                  style={styles.cardImage}
+                />
+                <Text style={[styles.cardTitle, darkMode && styles.darkText]} numberOfLines={1}>{item.name}</Text>
+                <TouchableOpacity onPress={() => handleRemoveFavorite(item)} style={styles.cardHeart}>
+                  <MaterialIcons name="favorite" size={20} color={darkMode ? '#ef4444' : '#dc2626'} />
                 </TouchableOpacity>
               </View>
             )}
@@ -132,6 +160,56 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    justifyContent: 'space-between',
+  },
+  tabButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  activeTabButton: {
+    backgroundColor: '#0a7ea4',
+  },
+  tabText: {
+    color: '#0a7ea4',
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  card: {
+    width: '48%',
+    marginVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 8,
+    alignItems: 'center',
+  },
+  darkCard: {
+    backgroundColor: '#1e293b',
+  },
+  cardImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    backgroundColor: '#eee',
+  },
+  cardTitle: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cardHeart: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'transparent',
+    padding: 6,
+    borderRadius: 20,
   },
   darkText: {
     color: '#fff',

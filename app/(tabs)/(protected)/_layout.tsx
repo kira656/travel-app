@@ -97,7 +97,7 @@ export default function ProtectedLayout() {
   const closeDrawer = () => setDrawerVisible(false);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bgScreen }} edges={["top", "left", "right"]}>
       <Tabs
         screenOptions={{
           headerShown: true,
@@ -109,7 +109,6 @@ export default function ProtectedLayout() {
           tabBarStyle: [
             styles.tabBar,
             {
-              paddingBottom: insets.bottom,
               backgroundColor: colors.bgTab,
               borderTopColor: colors.border,
             },
@@ -149,6 +148,16 @@ export default function ProtectedLayout() {
           }}
         />
         <Tabs.Screen
+          name="balance"
+          options={{
+            href: null,
+            title: 'Favorites',
+            tabBarIcon: ({ color }) => (
+              <MaterialIcons name="favorite" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="profile"
           options={{
             title: 'Profile',
@@ -164,6 +173,30 @@ export default function ProtectedLayout() {
         <Tabs.Screen
           name="countries/[countryId]/[cityId]/index"
           options={{ href: null, title: 'Details' }}
+        />
+        <Tabs.Screen
+          name="countries/[countryId]/[cityId]/hotels"
+          options={{ href: null, title: 'Hotels' }}
+        />
+        <Tabs.Screen
+          name="countries/[countryId]/[cityId]/attractions"
+          options={{ href: null, title: 'Attractions' }}
+        />
+        <Tabs.Screen
+          name="countries/[countryId]/[cityId]/trips"
+          options={{ href: null, title: 'Trips' }}
+        />
+        <Tabs.Screen
+          name="countries/[countryId]/[cityId]/map"
+          options={{ href: null, title: 'Map' }}
+        />
+        <Tabs.Screen
+          name="hotels/[hotelId]/index"
+          options={{ href: null, title: 'Hotel' }}
+        />
+        <Tabs.Screen
+          name="hotels/[hotelId]/room-types/[roomTypeId]"
+          options={{ href: null, title: 'Room Type' }}
         />
         <Tabs.Screen
           name="account/settings"
@@ -200,7 +233,7 @@ export default function ProtectedLayout() {
             icon: 'info',
             onPress: () => {
               closeDrawer();
-              router.push('/about');
+              router.push('/about' as any);
             },
           },
         ]}
@@ -217,7 +250,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 10,
     //height: 70,
-    marginTop:-30,
+    // remove negative margin to avoid header overlapping the top edge
+    marginTop: 0,
   },
   headerTitle: {
     fontSize: 20,
@@ -225,8 +259,9 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     paddingVertical: 4,
-    height: 65,
-   // marginBottom:-10,
+    height: 100,
+   // add bottom offset so tabs sit above the native navigation area
+   paddingBottom: 30,
   },
   center: {
     flex: 1,

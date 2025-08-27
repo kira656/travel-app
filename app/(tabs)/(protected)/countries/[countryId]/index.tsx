@@ -1,20 +1,26 @@
 import { countriesApi } from '@/apis/countries';
+import { favouritesApi } from '@/apis/favourites';
+import { reviewsApi } from '@/apis/reviews';
 import SafeAreaView from '@/components/SafeAreaView';
+import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { getImageUrl } from '@/utils/imageUtils';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
   Image,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
@@ -39,9 +45,29 @@ export default function CountryDetails() {
     enabled: !!countryIdNumber && !isNaN(countryIdNumber),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
-
+ console.log("country data",country)
   // Local state for dark mode to avoid state updates during render
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { user, isLoggedIn, toggleFavorite, isFavorite } = useAuthStore();
+  const { fetchFavorites } = useAuthStore();
+  const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
+  const [showFavouritesModal, setShowFavouritesModal] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [newReviewText, setNewReviewText] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [favouritesList, setFavouritesList] = useState<any[]>([]);
+  const [favouritesLoading, setFavouritesLoading] = useState(false);
+  const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  
+  useEffect(() => {
+    if (showFavouritesModal) fetchFavourites();
+  }, [showFavouritesModal]);
+
+  useEffect(() => {
+    if (showReviewsModal) fetchReviews();
+  }, [showReviewsModal]);
 
   useEffect(() => {
     // Read current theme state after mount
@@ -78,14 +104,14 @@ export default function CountryDetails() {
           <Text style={[styles.title, isDarkMode && styles.darkText]}>Loading...</Text>
           <View style={{ width: 28 }} />
         </View> */}
-<SafeAreaView style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#ffffff' }}>
+<View style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#ffffff' }}>
   <View style={[styles.centerContainer]}>
     <ActivityIndicator size="large" color="#0a7ea4" />
     <Text style={[styles.loadingText, isDarkMode && styles.darkText]}>
       Loading country details...
     </Text>
   </View>
-</SafeAreaView>
+</View>
 
 
 
@@ -153,14 +179,72 @@ export default function CountryDetails() {
     );
   }
 
+  const handleAddFavourite = async () => {
+    if (!isLoggedIn) {
+      router.push('/(auth)/login');
+      return;
+    }
+    try {
+      // Use auth store toggleFavorite which handles server sync and refetch
+      await toggleFavorite({ id: country.id.toString(), name: country.name, type: 'country' });
+
+      // refresh country data (avgRating, counts) and lists
+      await queryClient.invalidateQueries({ queryKey: ['country', countryIdNumber] });
+      if (showFavouritesModal) await fetchFavourites();
+    } catch (err) {
+      console.warn('Failed to toggle favourite', err);
+    }
+  };
+
+  const handleAddReview = async () => {
+    if (!isLoggedIn) {
+      router.push('/(auth)/login');
+      return;
+    }
+
+    try {
+      await reviewsApi.addReview({ entityType: 'country', entityId: country.id, rating: newReviewRating, comment: newReviewText }, token ?? undefined);
+      setNewReviewText('');
+      setNewReviewRating(5);
+      // refresh country and reviews list
+      await queryClient.invalidateQueries({ queryKey: ['country', countryIdNumber] });
+      if (showReviewsModal) await fetchReviews();
+    } catch (err) {
+      console.warn('Failed to add review', err);
+    }
+  };
+
+  const fetchFavourites = async (page = 1, limit = 20) => {
+    setFavouritesLoading(true);
+    try {
+      const res = await favouritesApi.getFavouritesForEntity('country', country.id, page, limit, token ?? undefined);
+      setFavouritesList(res.items ?? res.items ?? []);
+    } catch (err) {
+      console.warn('Failed to fetch favourites', err);
+      setFavouritesList([]);
+    } finally {
+      setFavouritesLoading(false);
+    }
+  };
+
+  const fetchReviews = async (page = 1, limit = 20) => {
+    setReviewsLoading(true);
+    try {
+      const res = await reviewsApi.getReviewsForEntity('country', country.id, page, limit, token ?? undefined);
+      setReviewsList(res.items ?? []);
+    } catch (err) {
+      console.warn('Failed to fetch reviews', err);
+      setReviewsList([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      backgroundColor={isDarkMode ? '#121212' : '#fff'}
-    >
+<View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#ffffff' }}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerButton}>
+        <Pressable onPress={() => router.push('/(tabs)/(protected)/countries')} hitSlop={10} style={styles.headerButton}>
           <MaterialIcons name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#1e293b'} />
         </Pressable>
         <Text style={[styles.title, isDarkMode && styles.darkText]}>
@@ -187,6 +271,7 @@ export default function CountryDetails() {
               </Text>
             </View>
           )}
+        {/* counts moved under main image for layout */}
         </View>
 
         {/* Country Image or Placeholder */}
@@ -209,6 +294,20 @@ export default function CountryDetails() {
               </Text>
             </View>
           )}
+          {/* Favourites and Reviews under main image */}
+          <View style={{ flexDirection: 'row', marginTop: 12, alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Pressable onPress={() => setShowFavouritesModal(true)} style={{ marginRight: 16 }}>
+                <Text style={{ color: isDarkMode ? '#9BD3E6' : '#0a7ea4' }}>{country.favourites?.length ?? country.favouritesCount ?? 0} favourites</Text>
+              </Pressable>
+              <Pressable onPress={() => setShowReviewsModal(true)}>
+                <Text style={{ color: isDarkMode ? '#9BD3E6' : '#0a7ea4' }}>{country.reviewsCount ?? 0} reviews</Text>
+              </Pressable>
+            </View>
+            <Pressable onPress={handleAddFavourite} style={{ padding: 8 }}>
+              <MaterialIcons name={isFavorite(country.id.toString()) ? 'favorite' : 'favorite-border'} size={28} color={isFavorite(country.id.toString()) ? (isDarkMode ? '#ff6b6b' : '#dc2626') : (isDarkMode ? '#94a3b8' : '#64748b')} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Country Information */}
@@ -253,6 +352,98 @@ export default function CountryDetails() {
             </ScrollView>
           </View>
         )}
+
+        {/* Favourites Bottom Modal */}
+        <Modal
+          visible={showFavouritesModal}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowFavouritesModal(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowFavouritesModal(false)}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} />
+          </TouchableWithoutFeedback>
+          <View style={{ backgroundColor: isDarkMode ? '#222' : '#fff', padding: 16, borderTopLeftRadius: 12, borderTopRightRadius: 12, maxHeight: '60%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: isDarkMode ? '#fff' : '#111' }}>Favourites</Text>
+              <Pressable onPress={() => setShowFavouritesModal(false)}>
+                <Text style={{ color: '#0a7ea4' }}>Close</Text>
+              </Pressable>
+            </View>
+            {favouritesLoading ? (
+              <View style={{ padding: 16 }}>
+                <ActivityIndicator />
+              </View>
+            ) : favouritesList.length > 0 ? (
+              <ScrollView>
+                {favouritesList.map((f: any, idx: number) => (
+                  <View key={idx} style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+                    <Text style={{ color: isDarkMode ? '#fff' : '#111' }}>{f.user?.name}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={{ color: isDarkMode ? '#fff' : '#111', marginTop: 12 }}>No favourites yet</Text>
+            )}
+          </View>
+        </Modal>
+
+        {/* Reviews Bottom Modal */}
+        <Modal
+          visible={showReviewsModal}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowReviewsModal(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowReviewsModal(false)}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} />
+          </TouchableWithoutFeedback>
+          <View style={{ backgroundColor: isDarkMode ? '#222' : '#fff', padding: 16, borderTopLeftRadius: 12, borderTopRightRadius: 12, maxHeight: '70%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: isDarkMode ? '#fff' : '#111' }}>Reviews</Text>
+              <Pressable onPress={() => setShowReviewsModal(false)}>
+                <Text style={{ color: '#0a7ea4' }}>Close</Text>
+              </Pressable>
+            </View>
+            {reviewsLoading ? (
+              <View style={{ padding: 16 }}>
+                <ActivityIndicator />
+              </View>
+            ) : reviewsList.length > 0 ? (
+              <ScrollView>
+                {reviewsList.map((r: any) => (
+                  <View key={r.id} style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+                    <Text style={{ color: isDarkMode ? '#fff' : '#111' }}>{r.user?.name} — {r.rating}★</Text>
+                    <Text style={{ color: isDarkMode ? '#ddd' : '#444' }}>{r.comment}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={{ color: isDarkMode ? '#fff' : '#111', marginTop: 12 }}>No reviews yet</Text>
+            )}
+
+            <View style={{ marginTop: 12 }}>
+              <Text style={{ color: isDarkMode ? '#fff' : '#111' }}>Add review</Text>
+              <TextInput
+                value={newReviewText}
+                onChangeText={setNewReviewText}
+                placeholder="Write your review"
+                style={{ borderWidth: 1, borderColor: '#e2e8f0', padding: 8, marginTop: 8 }}
+                multiline
+              />
+              <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                {[1,2,3,4,5].map((n) => (
+                  <Pressable key={n} onPress={() => setNewReviewRating(n)} style={{ marginRight: 8 }}>
+                    <Text style={{ color: newReviewRating >= n ? '#FFD700' : '#999' }}>{'★'}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Pressable onPress={handleAddReview} style={{ marginTop: 12 }}>
+                <Text style={{ color: '#0a7ea4' }}>Submit Review</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
 
         {/* Cities Section */}
         {country.cities && country.cities.length > 0 && (
@@ -350,7 +541,7 @@ export default function CountryDetails() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -584,3 +775,4 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
+  

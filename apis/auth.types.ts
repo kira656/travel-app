@@ -18,7 +18,7 @@ export interface User {
   avatar: string | null
   role: 'user' | 'admin'
   createdAt: string
-  favorites: FavoriteItem[]; // Add this line
+  favourites: FavoriteItem[]; // Add this line
 
 }
 
