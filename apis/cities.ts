@@ -12,4 +12,12 @@ export const citiesApi = {
       throw error;
     }
   },
+  getCityWithHotelsAttractions: async (cityId: string) => {
+    try {
+      const response = await client.get(`/cities/${cityId}/with-hotels-attractions`);
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
 };

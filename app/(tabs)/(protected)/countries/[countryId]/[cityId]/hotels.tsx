@@ -52,7 +52,7 @@ export default function CityHotels() {
 				<Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]', params: { countryId: String(countryId), cityId: String(cityId) } })} style={styles.headerButton}>
 					<MaterialIcons name="arrow-back" size={28} color={darkMode ? '#fff' : '#1e293b'} />
 				</Pressable>
-				<Text style={[styles.title, { color: darkMode ? '#fff' : '#1e293b' }]}>Hotels</Text>
+				{/* <Text style={[styles.title, { color: darkMode ? '#fff' : '#1e293b' }]}>Hotels</Text> */}
 				<View style={{ width: 28 }} />
 			</View>
 

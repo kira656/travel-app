@@ -191,7 +191,7 @@ export default function CityDetails() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header with back button */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.headerButton}>
+          <Pressable onPress={() => router.replace(`/(tabs)/(protected)/countries/${cityData.countryId}?name=${encodeURIComponent(cityData.country.name)}`)} style={styles.headerButton}>
             <MaterialIcons
               name="arrow-back"
               size={28}

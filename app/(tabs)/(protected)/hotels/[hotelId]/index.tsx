@@ -1,6 +1,7 @@
 import { favouritesApi } from '@/apis/favourites';
 import { hotelsApi } from '@/apis/hotels';
 import { reviewsApi } from '@/apis/reviews';
+import MapView, { Marker } from '@/components/MapShim';
 import SafeAreaView from '@/components/SafeAreaView';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -102,8 +103,10 @@ export default function HotelDetails() {
 	if (isLoading) {
 		return (
 			<SafeAreaView style={styles.container} backgroundColor={darkMode ? '#121212' : '#fff'}>
-				<ActivityIndicator size="large" color="#0a7ea4" />
-				<Text style={[styles.loadingText, { color: darkMode ? '#fff' : '#1e293b' }]}>Loading hotel...</Text>
+				<View style={styles.center}>
+					<ActivityIndicator size="large" color="#0a7ea4" />
+					<Text style={[styles.loadingText, { color: darkMode ? '#fff' : '#1e293b' }]}>Loading hotel...</Text>
+				</View>
 			</SafeAreaView>
 		);
 	}
@@ -126,6 +129,13 @@ export default function HotelDetails() {
 	return (
 		<View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#ffffff' }}>
 			<ScrollView showsVerticalScrollIndicator={false}>
+				{/* Floating back button to City page */}
+				{/* <Pressable
+					onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/index', params: { countryId: String(hotel.city?.countryId ?? ''), cityId: String(hotel.city?.id ?? '') } })}
+					style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}
+				>
+					<MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
+				</Pressable> */}
 				<View style={styles.header}>
 					<Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/hotels', params: { countryId: String(hotel.city?.countryId ?? ''), cityId: String(hotel.city?.id ?? '') } })} style={styles.headerButton}>
 						<MaterialIcons name="arrow-back" size={28} color={darkMode ? '#fff' : '#1e293b'} />
@@ -270,6 +280,29 @@ export default function HotelDetails() {
 					) : (
 						<Text style={{ color: darkMode ? '#fff' : '#1e293b' }}>No room types found.</Text>
 					)}
+
+					{/* Map section (uses MapShim for web safety) */}
+					{(() => {
+						const lat = (hotel as any)?.latitude ?? (hotel as any)?.lat ?? (hotel as any)?.location?.lat;
+						const lng = (hotel as any)?.longitude ?? (hotel as any)?.lng ?? (hotel as any)?.location?.lng;
+						let latNum: number | undefined = typeof lat === 'number' ? lat : (lat ? parseFloat(String(lat)) : undefined);
+						let lngNum: number | undefined = typeof lng === 'number' ? lng : (lng ? parseFloat(String(lng)) : undefined);
+						if ((latNum == null || isNaN(latNum)) && Array.isArray((hotel as any)?.city?.center)) {
+							const [cityLng, cityLat] = (hotel as any).city.center;
+							latNum = typeof cityLat === 'number' ? cityLat : (cityLat ? parseFloat(String(cityLat)) : undefined);
+							lngNum = typeof cityLng === 'number' ? cityLng : (cityLng ? parseFloat(String(cityLng)) : undefined);
+						}
+						if (typeof latNum === 'number' && typeof lngNum === 'number') {
+							return (
+								<View style={{ marginTop: 12, height: 220, borderRadius: 12, overflow: 'hidden' }}>
+									<MapView style={{ flex: 1 }} initialRegion={{ latitude: latNum, longitude: lngNum, latitudeDelta: 0.02, longitudeDelta: 0.02 }}>
+										<Marker coordinate={{ latitude: latNum, longitude: lngNum }} title={hotel.name} />
+									</MapView>
+								</View>
+							);
+						}
+						return null;
+					})()}
 				</View>
 			</ScrollView>
 		</View>

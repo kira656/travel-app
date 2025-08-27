@@ -25,8 +25,10 @@ export default function CityAttractions() {
 	if (isLoading) {
 		return (
 			<SafeAreaView style={styles.container} backgroundColor={darkMode ? '#121212' : '#fff'}>
-				<ActivityIndicator size="large" color="#0a7ea4" />
-				<Text style={[styles.loadingText, { color: darkMode ? '#fff' : '#1e293b' }]}>Loading attractions...</Text>
+				<View style={styles.center}>
+					<ActivityIndicator size="large" color="#0a7ea4" />
+					<Text style={[styles.loadingText, { color: darkMode ? '#fff' : '#1e293b' }]}>Loading attractions...</Text>
+				</View>
 			</SafeAreaView>
 		);
 	}
@@ -51,15 +53,18 @@ export default function CityAttractions() {
 				<Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]', params: { countryId: String(data?.data?.[0]?.city?.countryId ?? ''), cityId: String(cityId) } })} style={styles.headerButton}>
 					<MaterialIcons name="arrow-back" size={28} color={darkMode ? '#fff' : '#1e293b'} />
 				</Pressable>
-				<Text style={[styles.title, { color: darkMode ? '#fff' : '#1e293b' }]}>Attractions</Text>
+				{/* <Text style={[styles.title, { color: darkMode ? '#fff' : '#1e293b' }]}>Attractions</Text> */}
 				<View style={{ width: 28 }} />
 			</View>
 
 			<ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
 				{Array.isArray(data?.data) && data.data.length > 0 ? (
 					data.data.map((poi: any) => (
-						
-						<Pressable key={poi.id} style={[styles.card, { backgroundColor: darkMode ? '#1F2937' : '#fff' }]} onPress={() => { /* TODO: detail page */ }}>
+						<Pressable
+							key={poi.id}
+							style={[styles.card, { backgroundColor: darkMode ? '#1F2937' : '#fff' }]}
+							onPress={() => router.push({ pathname: '/(tabs)/(protected)/attractions/[attractionId]', params: { attractionId: String(poi.id), cityId: String(cityId), countryId: String(poi?.city?.countryId ?? '') } })}
+						>
 							{poi.mainImage ? (
 								
 								<Image 
@@ -76,6 +81,13 @@ export default function CityAttractions() {
 							)}
 							<View style={styles.cardBody}>
 								<Text style={[styles.cardTitle, { color: darkMode ? '#fff' : '#1e293b' }]}>{poi.name}</Text>
+								<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+									<MaterialIcons name="star" size={16} color="#FFD700" />
+									<Text style={{ marginLeft: 4, color: darkMode ? '#fff' : '#1e293b' }}>
+										{(poi.avgRating ?? poi.averageRating ?? poi.rating ?? 0).toFixed ? (poi.avgRating ?? poi.averageRating ?? poi.rating ?? 0).toFixed(1) : String(poi.avgRating ?? poi.averageRating ?? poi.rating ?? 0)}
+									</Text>
+									<Text style={{ marginLeft: 6, color: darkMode ? '#9CA3AF' : '#6B7280' }}>({poi.reviewsCount ?? 0})</Text>
+								</View>
 								<Text numberOfLines={2} style={[styles.cardSubtitle, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>{poi.description}</Text>
 							</View>
 						</Pressable>

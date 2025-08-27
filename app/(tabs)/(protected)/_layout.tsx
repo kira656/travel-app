@@ -72,13 +72,23 @@ export default function ProtectedLayout() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const colors = getThemeColors(darkMode);
 
-  // ✅ Prevent accidental back navigation
+  // Android back button: close drawer if open, navigate back if possible, else allow default
   useFocusEffect(
     useCallback(() => {
-      const onBackPress = () => true;
+      const onBackPress = () => {
+        if (drawerVisible) {
+          setDrawerVisible(false);
+          return true; // handled
+        }
+        if (router.canGoBack()) {
+          router.back();
+          return true; // handled
+        }
+        return false; // let the system handle (e.g., exit app)
+      };
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => subscription.remove();
-    }, [])
+    }, [drawerVisible])
   );
 
   if (isLoading) {
@@ -189,6 +199,10 @@ export default function ProtectedLayout() {
         <Tabs.Screen
           name="countries/[countryId]/[cityId]/map"
           options={{ href: null, title: 'Map' }}
+        />
+        <Tabs.Screen
+          name="attractions/[attractionId]/index"
+          options={{ href: null, title: 'Attraction' }}
         />
         <Tabs.Screen
           name="hotels/[hotelId]/index"
