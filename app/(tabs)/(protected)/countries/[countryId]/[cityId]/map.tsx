@@ -53,17 +53,21 @@ export default function CityMap() {
 
 	return (
 		<SafeAreaView style={styles.container} backgroundColor={darkMode ? '#121212' : '#fff'}>
-				<View style={styles.header}>
-					<Pressable onPress={() => router.replace(`/(tabs)/(protected)/countries/${data.country.id}/${cityId}?name=${encodeURIComponent(data.name)}`)} style={styles.headerButton}>
-						<MaterialIcons name="arrow-back" size={28} color={darkMode ? '#fff' : '#1e293b'} />
+				
+					<Pressable onPress={() => router.replace(`/(tabs)/(protected)/countries/${data.country.id}/${cityId}?name=${encodeURIComponent(data.name)}`)} style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0', }}>
+						<MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
 					</Pressable>
+					
+					{/* <Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]', params: { countryId: String(data?.data?.[0]?.city?.countryId ?? ''), cityId: String(cityId) } })} style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}>
+					<MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
+				</Pressable> */}
 					{/* <Text style={[styles.title, { color: darkMode ? '#fff' : '#1e293b' }]}>Map</Text> */}
 					<View style={{ width: 28 }} />
-				</View>
+				
 			<View style={styles.content}>
-				<Text style={{ color: darkMode ? '#fff' : '#1e293b', marginBottom: 8 }}>Map for city {String((data as any)?.name || cityId)}</Text>
+				<Text style={{ color: darkMode ? '#fff' : '#1e293b', marginBottom: 8, textAlign: 'center' }}>Map for city {String((data as any)?.name || cityId)}</Text>
 				{Platform.OS === 'web' ? (
-					<Text style={{ color: darkMode ? '#9CA3AF' : '#6B7280' }}>Map not supported on web.</Text>
+					<Text style={{ color: darkMode ? '#9CA3AF' : '#6B7280',textAlign: 'center' }}>Map not supported on web.</Text>
 				) : (
 					(() => {
 						// Determine map center from API if available; default to Rome coords

@@ -190,17 +190,24 @@ export default function CityDetails() {
 <View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#ffffff' }}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header with back button */}
-        <View style={styles.header}>
-          <Pressable onPress={() => router.replace(`/(tabs)/(protected)/countries/${cityData.countryId}?name=${encodeURIComponent(cityData.country.name)}`)} style={styles.headerButton}>
+        {/* <View style={styles.header}> */}
+          {/* <Pressable onPress={() => router.replace(`/(tabs)/(protected)/countries/${cityData.countryId}?name=${encodeURIComponent(cityData.country.name)}`)} style={styles.headerButton}>
             <MaterialIcons
               name="arrow-back"
-              size={28}
-              color={darkMode ? '#fff' : '#1e293b'}
+              size={22} color={darkMode ? '#fff' : '#1e293b'}
             />
-          </Pressable>
-          <Text style={[styles.title, themeStyles.text]}>{cityData.name}</Text>
-          <View style={{ width: 28 }} />
-        </View>
+          </Pressable> */}
+          <Pressable
+          onPress={() => {
+            //const ctryId = String((data as any)?.city?.countryId ?? countryId ?? '');
+           // const ctyId = String((data as any)?.city?.id ?? cityId ?? '');
+           router.replace(`/(tabs)/(protected)/countries/${cityData.countryId}?name=${encodeURIComponent(cityData.country.name)}`)}}
+          style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}
+        >
+          <MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
+        </Pressable>
+
+        {/* </View> */}
 
         {/* City Image */}
         {mainImageUrl ? (

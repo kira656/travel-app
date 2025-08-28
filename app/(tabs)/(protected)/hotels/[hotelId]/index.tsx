@@ -44,18 +44,25 @@ export default function HotelDetails() {
 	useEffect(() => {
 		if (showReviewsModal) fetchReviews();
 	}, [showReviewsModal]);
+	const [isFavorite, setIsFavorite] = useState(useAuthStore.getState().isFavorite(hotelId?.toString() ?? ''));
 
 	const handleAddFavourite = async () => {
 		const { isLoggedIn, toggleFavorite } = useAuthStore.getState();
-		if (!isLoggedIn) { router.push('/(auth)/login'); return; }
-		try {
-			await toggleFavorite({ id: data.id.toString(), name: data.name, type: 'hotel' });
-			await queryClient.invalidateQueries({ queryKey: ['hotel', Number(data.id)] });
-			if (showFavouritesModal) await fetchFavourites();
-		} catch (err) {
-			console.warn('Failed to toggle favourite', err);
+		if (!isLoggedIn) {
+		  router.push('/(auth)/login');
+		  return;
 		}
-	};
+		try {
+		  await toggleFavorite({ id: hotel.id.toString(), name: hotel.name, type: 'hotel' });
+		  setIsFavorite(useAuthStore.getState().isFavorite(hotel.id.toString())); // ✅ update local state
+		  await queryClient.invalidateQueries({ queryKey: ['hotel', Number(hotel.id)] });
+		  await refetch(); // ✅ ensures fresh data
+
+		  if (showFavouritesModal) await fetchFavourites();
+		} catch (err) {
+		  console.warn('Failed to toggle favourite', err);
+		}
+	  };
 
 	const handleAddReview = async () => {
 		const { isLoggedIn } = useAuthStore.getState();
@@ -129,20 +136,13 @@ export default function HotelDetails() {
 	return (
 		<View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#ffffff' }}>
 			<ScrollView showsVerticalScrollIndicator={false}>
-				{/* Floating back button to City page */}
-				{/* <Pressable
-					onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/index', params: { countryId: String(hotel.city?.countryId ?? ''), cityId: String(hotel.city?.id ?? '') } })}
-					style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}
-				>
-					<MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
-				</Pressable> */}
-				<View style={styles.header}>
-					<Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/hotels', params: { countryId: String(hotel.city?.countryId ?? ''), cityId: String(hotel.city?.id ?? '') } })} style={styles.headerButton}>
-						<MaterialIcons name="arrow-back" size={28} color={darkMode ? '#fff' : '#1e293b'} />
+
+					<Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/hotels', params: { countryId: String(hotel.city?.countryId ?? ''), cityId: String(hotel.city?.id ?? '') } })} style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}>
+						<MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
 					</Pressable>
-					<Text style={[styles.title, { color: darkMode ? '#fff' : '#1e293b' }]}>{hotel.name}</Text>
+					
 					<View style={{ width: 28 }} />
-				</View>
+				{/* </View> */}
 
 				{hotel.mainImage ? (
 					<Image source={{ uri: getImageUrl(hotel.mainImage) }} style={styles.image} resizeMode="cover" />
@@ -163,7 +163,12 @@ export default function HotelDetails() {
 						</Pressable>
 					</View>
 					<Pressable onPress={handleAddFavourite} style={{ padding: 8 }}>
-						<MaterialIcons name={useAuthStore.getState().isFavorite(hotel.id.toString()) ? 'favorite' : 'favorite-border'} size={28} color={useAuthStore.getState().isFavorite(hotel.id.toString()) ? (darkMode ? '#ff6b6b' : '#dc2626') : (darkMode ? '#94a3b8' : '#64748b')} />
+					<MaterialIcons
+  name={isFavorite ? 'favorite' : 'favorite-border'}
+  size={28}
+  color={isFavorite ? (darkMode ? '#ff6b6b' : '#dc2626') : (darkMode ? '#94a3b8' : '#64748b')}
+/>
+
 					</Pressable>
 				</View>
 

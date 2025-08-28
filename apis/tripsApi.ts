@@ -19,4 +19,6 @@ export const tripsApi = {
       throw error;
     }
   },
+  
 };
+    
