@@ -2,7 +2,8 @@
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function PersonalInfoPage() {
   const { user } = useAuthStore();
@@ -18,7 +19,12 @@ export default function PersonalInfoPage() {
   return (
    
       <View style={[styles.container, darkMode && styles.darkContainer]}>
-        {personalInfoFields.map((field, index) => (
+        				<Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/profile' })} style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}>
+					<MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
+				</Pressable>
+<View style={{marginTop: 60}}>
+{personalInfoFields.map((field, index) => (
+          
           <View 
             key={index}
             style={[
@@ -44,6 +50,7 @@ export default function PersonalInfoPage() {
             </View>
           </View>
         ))}
+</View>
       </View>
     
   );

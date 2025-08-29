@@ -5,7 +5,7 @@ export default function AuthLayout() {
   const { isLoggedIn, isLoading } = useAuthStore();
 
   if (isLoading) return null;
-  if (isLoggedIn) return <Redirect href="/(tabs)/(protected)/countries" />;
+  if (isLoggedIn) return <Redirect href="/(tabs)/(protected)/home" />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

@@ -1,8 +1,9 @@
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface FavoriteItem {
   id: string;
@@ -47,6 +48,9 @@ export default function Favorites() {
   return (
    
       <View style={[styles.container, darkMode && styles.darkContainer]}>
+        <Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/profile' })} style={{position: 'absolute',  top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}>
+					<MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
+				</Pressable>
         {/* Tabs header */}
         <View style={styles.tabsContainer}>
           {tabs.map((t) => (
@@ -162,6 +166,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   tabsContainer: {
+    marginTop:50,
     flexDirection: 'row',
     marginBottom: 12,
     justifyContent: 'space-between',

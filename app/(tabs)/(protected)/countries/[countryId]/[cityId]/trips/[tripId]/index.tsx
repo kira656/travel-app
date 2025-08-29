@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 
 import { tripBookingsApi } from '@/apis/tripBookings';
 import { tripsApi } from '@/apis/tripsApi';
+import { walletApi } from '@/apis/wallet';
 import MapView, { Marker } from '@/components/MapShim';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -14,6 +15,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function TripDetailScreen() {
   const { tripId , countryId, cityId } = useLocalSearchParams();
   const { darkMode } = useThemeStore();
+  const userBalance = useAuthStore((s) => Number((s.user as any)?.balance ?? 0));
+  const token = useAuthStore((s) => s.token);
 
   const backgroundColor = darkMode ? '#0b1220' : '#ffffff';
   const cardColor = darkMode ? '#1e293b' : '#f8fafc';
@@ -23,6 +26,30 @@ export default function TripDetailScreen() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [desiredSeats, setDesiredSeats] = useState<number | null>(null);
   const [itemModal, setItemModal] = useState<{ visible: boolean; item: any | null; type: 'poi' | 'hotel' | 'guide' | null }>({ visible: false, item: null, type: null });
+
+  // Refresh user balance from server every 5 minutes (and once on mount)
+  useEffect(() => {
+    if (!token) return;
+    let canceled = false;
+
+    const refreshBalance = async () => {
+      try {
+        const wallet = await walletApi.getMyWallet(token ?? undefined);
+        const balance = Number(wallet?.balance ?? wallet?.wallet?.balance ?? 0);
+        if (!canceled) await useAuthStore.getState().updateUser({ balance } as any);
+      } catch (err) {
+        console.warn('Failed to refresh wallet balance', err);
+      }
+    };
+
+    // initial
+    refreshBalance();
+    const id = setInterval(refreshBalance, 5 * 60 * 1000);
+    return () => {
+      canceled = true;
+      clearInterval(id);
+    };
+  }, [token]);
 
 
 
@@ -186,7 +213,8 @@ export default function TripDetailScreen() {
       const base = parseFloat(trip.pricePerPerson);
       const meals = trip.withMeals ? parseFloat(trip.mealPricePerPerson) : 0;
       const transport = trip.withTransport ? parseFloat(trip.transportationPricePerPerson) : 0;
-      const total = (base + meals + transport) * desiredSeats!;
+      const seats = Number(desiredSeats ?? 0);
+      const total = (base + meals + transport) * seats;
       const userBalance = Number((useAuthStore.getState().user as any)?.balance ?? 0);
 
       return (
@@ -220,8 +248,16 @@ export default function TripDetailScreen() {
               }
 
               try {
-                await tripBookingsApi.bookTrip(Number(tripId), desiredSeats!);
-                useAuthStore.getState().updateUser({ balance: userBalance - total } as any);
+                await tripBookingsApi.bookTrip(Number(tripId), desiredSeats!, token ?? undefined);
+                // After successful booking, refresh wallet from server to get authoritative balance
+                try {
+                  const wallet = await walletApi.getMyWallet(token ?? undefined);
+                  const balance = Number(wallet?.balance ?? wallet?.wallet?.balance ?? (userBalance - total));
+                  await useAuthStore.getState().updateUser({ balance } as any);
+                } catch (e) {
+                  // fallback to local deduction if refresh fails
+                  await useAuthStore.getState().updateUser({ balance: userBalance - total } as any);
+                }
                 Alert.alert('Booking confirmed', `You booked ${desiredSeats} seat(s).`);
                 setShowBookingModal(false);
               } catch (err) {

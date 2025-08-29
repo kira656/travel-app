@@ -67,7 +67,7 @@ const CustomHeader = ({
 export default function ProtectedLayout() {
   const { darkMode } = useThemeStore();
   const { isLoggedIn, isLoading } = useAuthStore();
-  const logged = true; // ✅ untouched
+  const logged = isLoggedIn; // derive from auth store
   const insets = useSafeAreaInsets();
   const [drawerVisible, setDrawerVisible] = useState(false);
   const colors = getThemeColors(darkMode);
@@ -220,20 +220,28 @@ export default function ProtectedLayout() {
           name="account/personal"
           options={{ href: null, title: 'Details' }}
         />
+                <Tabs.Screen
+          name="countries/[countryId]/[cityId]/trips/index"
+          options={{ href: null, title: 'Attractions' }}
+        />
+                <Tabs.Screen
+          name="countries/[countryId]/[cityId]/trips/[tripId]/index"
+          options={{ href: null, title: 'Attractions' }}
+        />
       </Tabs>
 
       <Drawer
         visible={drawerVisible}
         onClose={closeDrawer}
         items={[
-          {
-            label: 'Settings',
-            icon: 'settings',
-            onPress: () => {
-              closeDrawer();
-              router.push('/account/settings');
-            },
-          },
+          // {
+          //   label: 'Settings',
+          //   icon: 'settings',
+          //   onPress: () => {
+          //     closeDrawer();
+          //     router.push('/account/settings');
+          //   },
+          // },
           {
             label: 'Personal Info',
             icon: 'person',

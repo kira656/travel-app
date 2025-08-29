@@ -243,12 +243,13 @@ export default function CountryDetails() {
 <View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#ffffff' }}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.push('/(tabs)/(protected)/countries')} hitSlop={10} style={styles.headerButton}>
+        <Pressable onPress={() => router.push('/(tabs)/(protected)/countries')} hitSlop={10} style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}>
           <MaterialIcons name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#1e293b'} />
         </Pressable>
-        <Text style={[styles.title, isDarkMode && styles.darkText]}>
-          {country.name}
-        </Text>
+          {/* <Pressable onPress={() => router.push({ pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/hotels', params: { countryId: String(hotel.city?.countryId ?? ''), cityId: String(hotel.city?.id ?? '') } })} style={}>
+              <MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
+            </Pressable> */}
+
         <View style={{ width: 28 }} />
       </View>
 
@@ -547,6 +548,7 @@ export default function CountryDetails() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
+    zIndex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

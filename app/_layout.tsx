@@ -40,7 +40,8 @@ const InitialLayout = () => {
 
     if (isLoggedIn && inAuthGroup) {
       // Redirect logged-in users away from auth pages into protected area
-      router.replace('/(tabs)/(protected)/countries');
+      // Default landing should be home rather than countries
+      router.replace('/(tabs)/(protected)/home');
     } else if (!isLoggedIn && !inAuthGroup && !isRoot) {
       // Only redirect unauthenticated users if they are NOT on the root splash page
       router.replace('/(auth)/login');

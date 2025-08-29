@@ -1,8 +1,9 @@
 // app/(protected)/settings/page.tsx
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Pressable, TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function SettingsPage() {
   const { darkMode, toggleDarkMode } = useThemeStore();
@@ -56,12 +57,19 @@ export default function SettingsPage() {
   return (
    
       <View style={[styles.container, darkMode && styles.darkContainer]}>
+        <Pressable onPress={() => router.push('/(tabs)/(protected)/profile')}
+          style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, backgroundColor: darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)', borderRadius: 999, padding: 8, borderWidth: 1, borderColor: darkMode ? '#334155' : '#e2e8f0' }}
+        >
+          <MaterialIcons name="arrow-back" size={22} color={darkMode ? '#fff' : '#1e293b'} />
+        </Pressable>
+        <View style={{marginTop:50}}>
         {settingsOptions.map((option) => (
           <TouchableOpacity
             key={option.id}
             onPress={option.onPress}
             style={[styles.optionCard, darkMode && styles.darkOptionCard]}
           >
+
             <View style={styles.optionLeft}>
               <MaterialIcons 
                 name={option.icon as any} 
@@ -81,6 +89,7 @@ export default function SettingsPage() {
             )}
           </TouchableOpacity>
         ))}
+        </View>
       </View>
    
   );
@@ -90,6 +99,7 @@ export default function SettingsPage() {
 
 const styles = StyleSheet.create({
   container: {
+    
     flex: 1,
     padding: 16,
     backgroundColor: '#f8fafc',
@@ -128,6 +138,7 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
   },
   optionCard: {
+    
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -141,6 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
   },
   optionLeft: {
+    
     flexDirection: 'row',
     alignItems: 'center',
   },
