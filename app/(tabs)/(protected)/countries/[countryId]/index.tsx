@@ -45,7 +45,6 @@ export default function CountryDetails() {
     enabled: !!countryIdNumber && !isNaN(countryIdNumber),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
- console.log("country data",country)
   // Local state for dark mode to avoid state updates during render
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { user, isLoggedIn, toggleFavorite, isFavorite } = useAuthStore();
@@ -243,6 +242,15 @@ export default function CountryDetails() {
   return (
 <View style={{ flex: 1, backgroundColor: darkMode ? '#0b1220' : '#ffffff' }}>
       {/* Header */}
+      <View style={styles.header}>
+        <Pressable onPress={() => router.push('/(tabs)/(protected)/countries')} hitSlop={10} style={styles.headerButton}>
+          <MaterialIcons name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#1e293b'} />
+        </Pressable>
+        <Text style={[styles.title, isDarkMode && styles.darkText]}>
+          {country.name}
+        </Text>
+        <View style={{ width: 28 }} />
+      </View>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Country Code and Rating */}

@@ -1,12 +1,13 @@
 import { citiesApi } from '@/apis/cities';
-import MapView, { Marker } from '@/components/MapShim';
+import MapView, { Circle, Marker } from '@/components/MapShim';
 import SafeAreaView from '@/components/SafeAreaView';
 import { useThemeStore } from '@/stores/themeStore';
+import { getFallbackImageUrl, getImageUrl } from '@/utils/imageUtils';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function CityMap() {
 	const router = useRouter();
@@ -49,7 +50,7 @@ export default function CityMap() {
 			</SafeAreaView>
 		);
 	}
-	console.log(data);
+	console.log("ddddddddddddddddddddddddddddd",data);
 
 	return (
 		<SafeAreaView style={styles.container} backgroundColor={darkMode ? '#121212' : '#fff'}>
@@ -80,6 +81,24 @@ export default function CityMap() {
 							centerLng = typeof lng === 'number' ? lng : (lng ? parseFloat(String(lng)) : centerLng);
 						}
 
+						// Parse radius (meters) from data; default to 10000 meters if missing
+						let cityRadiusMeters = 10000;
+						const rawRadius = (data as any)?.radius;
+						if (rawRadius !== undefined && rawRadius !== null) {
+							const parsed = Number(rawRadius);
+							if (!Number.isNaN(parsed) && parsed > 0) {
+								// some APIs store radius as string kilometers or meters; assume kilometers if <= 100 and > 1
+								cityRadiusMeters = parsed > 1000 ? parsed : parsed * (parsed <= 100 ? 1000 : 1);
+							}
+						}
+
+						// Compute map deltas (latitudeDelta/longitudeDelta) from radius so default zoom is tighter
+						// Earth: ~111km per degree latitude. We'll compute a delta that fits the radius with a padding factor.
+						const metersToDegreesLat = (meters: number) => meters / 111000;
+						const paddingFactor = 1.6; // slightly larger so markers aren't on the edge
+						const latDelta = Math.max(0.01, metersToDegreesLat(cityRadiusMeters * paddingFactor));
+						const lngDelta = Math.max(0.01, latDelta * 1.0);
+
 						// Helper to compute fallback coordinates around center when item has no coords
 						const pointOnCircle = (index: number, total: number, radius = 0.01) => {
 							const angle = (2 * Math.PI * index) / Math.max(1, total);
@@ -94,10 +113,24 @@ export default function CityMap() {
 
 						return (
 							<View style={{ height: 500, width: '100%', borderRadius: 8, overflow: 'hidden' }}>
-								<MapView style={{ flex: 1 }} initialRegion={{ latitude: centerLat, longitude: centerLng, latitudeDelta: 0.2, longitudeDelta: 0.2 }}>
+								<MapView style={{ flex: 1 }} initialRegion={{ latitude: centerLat, longitude: centerLng, latitudeDelta: latDelta, longitudeDelta: lngDelta }}>
+									{/* City center marker */}
+									<Marker
+										key={`city-center-${(data as any).id}`}
+										coordinate={{ latitude: centerLat, longitude: centerLng }}
+										title={(data as any).name}
+										description={`City center of ${(data as any).name}`}
+										pinColor="#EF4444"
+									/>
+									{/* Draw radius circle around city center (meters) */}
+									{typeof Circle !== 'undefined' ? (
+										<Circle center={{ latitude: centerLat, longitude: centerLng }} radius={cityRadiusMeters} strokeColor="rgba(14,165,233,0.6)" fillColor="rgba(14,165,233,0.15)" />
+									) : null}
 									{hotels.map((h, i) => {
-										let lat = h.latitude ?? h.lat ?? h.location?.lat;
-										let lng = h.longitude ?? h.lng ?? h.location?.lng;
+										console.log('hotels',h.location)
+										
+										let lat = h.location[1];
+										let lng = h.location[0];
 										if (typeof lat !== 'number' || typeof lng !== 'number') {
 											const p = pointOnCircle(i, hotels.length, 0.015);
 											lat = p.lat; lng = p.lng;
@@ -115,8 +148,8 @@ export default function CityMap() {
 									})}
 
 									{pois.map((p, i) => {
-										let lat = p.latitude ?? p.lat ?? p.location?.lat;
-										let lng = p.longitude ?? p.lng ?? p.location?.lng;
+										let lat = p.location[1];
+										let lng = p.location[0];
 										if (typeof lat !== 'number' || typeof lng !== 'number') {
 											const off = pointOnCircle(i, pois.length, 0.03); // different ring radius
 											lat = off.lat; lng = off.lng;
@@ -142,6 +175,7 @@ export default function CityMap() {
 				<View style={{ position: 'absolute', left: 16, right: 16, bottom: 24 }}>
 					<View style={{ borderRadius: 12, padding: 16, backgroundColor: darkMode ? '#1f2937' : '#ffffff', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 5 }}>
 						<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+							<Image source={{ uri: getImageUrl(selected.item.mainImage) || getFallbackImageUrl() }} style={{ width: 64, height: 64, borderRadius: 8, marginRight: 12 }} />
 							<Text style={{ fontSize: 16, fontWeight: '700', color: darkMode ? '#fff' : '#1e293b' }} numberOfLines={1}>
 								{selected.item.name}
 							</Text>

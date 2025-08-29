@@ -5,9 +5,10 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleShe
 
 import { tripBookingsApi } from '@/apis/tripBookings';
 import { tripsApi } from '@/apis/tripsApi';
+import MapView, { Marker } from '@/components/MapShim';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
-import { getImageUrl } from '@/utils/imageUtils';
+import { getFallbackImageUrl, getImageUrl } from '@/utils/imageUtils';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TextInput } from 'react-native-gesture-handler';
 
@@ -22,6 +23,7 @@ export default function TripDetailScreen() {
   const borderColor = darkMode ? '#334155' : '#e2e8f0';
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [desiredSeats, setDesiredSeats] = useState<number | null>(null);
+  const [itemModal, setItemModal] = useState<{ visible: boolean; item: any | null; type: 'poi' | 'hotel' | 'guide' | null }>({ visible: false, item: null, type: null });
 
 
 
@@ -74,7 +76,7 @@ export default function TripDetailScreen() {
         {trip.startDate} → {trip.endDate}
       </Text>
       <View style={styles.tagRow}>
-        {trip.tripToTags.map(({ tag }) => (
+        {trip.tripToTags.map(({ tag }: any) => (
           <View key={tag.id} style={[styles.tag, { backgroundColor: cardColor, borderColor }]}>
             <Text style={{ color: textColor }}>{tag.name}</Text>
           </View>
@@ -91,12 +93,14 @@ export default function TripDetailScreen() {
       </View>
 
       {/* Hotel Info */}
-      {trip.tripHotels.map(({ hotel, roomType }, i) => (
+      {trip.tripHotels.map(({ hotel, roomType }: any, i: number) => (
         <View key={i} style={[styles.section, { backgroundColor: cardColor, borderColor }]}>
           <Text style={[styles.sectionTitle, { color: textColor }]}>Hotel</Text>
-          <Text style={[styles.subtext, { color: subTextColor }]}>
-            {hotel.name} ({hotel.stars}★) — {roomType.label} @ ${roomType.baseNightlyRate}
-          </Text>
+          <Pressable onPress={() => setItemModal({ visible: true, item: { ...hotel, roomType }, type: 'hotel' })}>
+            <Text style={[styles.subtext, { color: subTextColor }]}>
+              {hotel.name} ({hotel.stars}★) — {roomType.label} @ ${roomType.baseNightlyRate}
+            </Text>
+          </Pressable>
         </View>
       ))}
       {/* Pricing Info */}
@@ -130,18 +134,20 @@ export default function TripDetailScreen() {
 
 
       {/* Itinerary */}
-      {trip.tripDays.map((day) => (
+      {trip.tripDays.map((day: any) => (
         <View key={day.id} style={[styles.section, { backgroundColor: cardColor, borderColor }]}>
           <Text style={[styles.sectionTitle, { color: textColor }]}>
             Day {day.dayNumber}: {day.startTime} → {day.endTime}
           </Text>
-          {day.tripPois.map(({ poi }, i) => (
+          {day.tripPois.map(({ poi }: any, i: number) => (
             <View key={i} style={styles.poiItem}>
               <MaterialIcons name="location-on" size={18} color="#0a7ea4" />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.poiName, { color: textColor }]}>{poi.name}</Text>
-                <Text style={[styles.subtext, { color: subTextColor }]}>{poi.address}</Text>
-                <Text style={[styles.subtext, { color: subTextColor }]}>${poi.price}</Text>
+                <Pressable onPress={() => setItemModal({ visible: true, item: poi, type: 'poi' })}>
+                  <Text style={[styles.poiName, { color: textColor }]}>{poi.name}</Text>
+                  <Text style={[styles.subtext, { color: subTextColor }]}>{poi.address}</Text>
+                  <Text style={[styles.subtext, { color: subTextColor }]}>${poi.price}</Text>
+                </Pressable>
               </View>
             </View>
           ))}
@@ -180,7 +186,7 @@ export default function TripDetailScreen() {
       const meals = trip.withMeals ? parseFloat(trip.mealPricePerPerson) : 0;
       const transport = trip.withTransport ? parseFloat(trip.transportationPricePerPerson) : 0;
       const total = (base + meals + transport) * desiredSeats!;
-      const userBalance = Number(useAuthStore.getState().user?.balance ?? 0);
+      const userBalance = Number((useAuthStore.getState().user as any)?.balance ?? 0);
 
       return (
         <View style={{ marginTop: 16 }}>
@@ -235,7 +241,7 @@ export default function TripDetailScreen() {
 
       {/* Gallery */}
       <View style={styles.galleryRow}>
-        {trip.galleryImages.map((img) => (
+        {trip.galleryImages.map((img: any) => (
           <Image
             key={img.id}
             source={{ uri: getImageUrl(trip.mainImage) }}
@@ -243,6 +249,64 @@ export default function TripDetailScreen() {
           />
         ))}
       </View>
+      
+      {/* Small interactive map for meet/drop and items */}
+      <View style={{ height: 240, marginTop: 12, borderRadius: 12, overflow: 'hidden' }}>
+        <MapView style={{ flex: 1 }} initialRegion={{ latitude: trip.meetLocation.y ?? 41.9, longitude: trip.meetLocation.x ?? 12.48, latitudeDelta: 0.05, longitudeDelta: 0.05 }}>
+          {/* Meet marker */}
+          {trip.meetLocation && (
+            <Marker coordinate={{ latitude: trip.meetLocation.y, longitude: trip.meetLocation.x }} title="Meet" pinColor="#10B981" />
+          )}
+          {/* Drop marker */}
+          {trip.dropLocation && (
+            <Marker coordinate={{ latitude: trip.dropLocation.y, longitude: trip.dropLocation.x }} title="Drop" pinColor="#F97316" />
+          )}
+          {/* POIs */}
+          {trip.tripDays.flatMap((d: any) => d.tripPois).map((tp:any) => {
+            const poi = tp.poi;
+            return (
+              <Marker key={`poi-${tp.id}`} coordinate={{ latitude: poi.location?.y ?? trip.meetLocation.y, longitude: poi.location?.x ?? trip.meetLocation.x }} title={poi.name} pinColor="#F59E0B" onPress={() => setItemModal({ visible: true, item: poi, type: 'poi' })} />
+            );
+          })}
+          {/* Hotel */}
+          {trip.tripHotels.map((th:any) => (
+            <Marker key={`hotel-${th.hotel.id}`} coordinate={{ latitude: th.hotel.location?.y ?? trip.meetLocation.y, longitude: th.hotel.location?.x ?? trip.meetLocation.x }} title={th.hotel.name} pinColor="#0a7ea4" onPress={() => setItemModal({ visible: true, item: { ...th.hotel, roomType: th.roomType }, type: 'hotel' })} />
+          ))}
+        </MapView>
+      </View>
+
+      {/* Item modal for POI/Hotel/Guide details */}
+      <Modal visible={itemModal.visible} transparent animationType="slide" onRequestClose={() => setItemModal({ visible: false, item: null, type: null })}>
+        <TouchableWithoutFeedback onPress={() => setItemModal({ visible: false, item: null, type: null })}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} />
+        </TouchableWithoutFeedback>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, borderTopWidth: 1, borderTopColor: darkMode ? '#333' : '#eee', backgroundColor: darkMode ? '#1a1a1a' : '#fff' }}>
+          {itemModal.item && (
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image source={{ uri: getImageUrl(itemModal.item.mainImage) || getFallbackImageUrl() }} style={{ width: 72, height: 72, borderRadius: 8, marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: textColor, fontSize: 16, fontWeight: '700' }}>{itemModal.item.name}</Text>
+                  <Text style={{ color: subTextColor }}>{itemModal.item.address || itemModal.item.description}</Text>
+                </View>
+              </View>
+              {itemModal.type === 'hotel' && itemModal.item.roomType && (
+                <View style={{ marginTop: 8 }}>
+                  <Text style={{ color: subTextColor }}>Room: {itemModal.item.roomType.label} — ${itemModal.item.roomType.baseNightlyRate}</Text>
+                </View>
+              )}
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
+                <Pressable onPress={() => {
+                  if (itemModal.type === 'hotel') router.push({ pathname: '/(tabs)/(protected)/hotels/[hotelId]', params: { hotelId: String(itemModal.item.id) } });
+                  if (itemModal.type === 'poi') router.push({ pathname: '/(tabs)/(protected)/attractions/[attractionId]', params: { attractionId: String(itemModal.item.id), cityId: String(trip.city.id) } });
+                }} style={{ backgroundColor: '#0a7ea4', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
+                  <Text style={{ color: '#fff' }}>View more</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </View>
+      </Modal>
     </ScrollView>
   );
 }

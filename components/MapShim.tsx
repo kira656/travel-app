@@ -15,5 +15,7 @@ const exportedDefault = impl && (impl.default || impl);
 
 export default exportedDefault;
 export const Marker = impl?.Marker || undefined;
+// Export Circle from native implementation so callers can draw radiuses on the map
+export const Circle = impl?.Circle || undefined;
 
 
