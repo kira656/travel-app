@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 
 import { tripBookingsApi } from '@/apis/tripBookings';
 import { tripsApi } from '@/apis/tripsApi';
@@ -10,7 +10,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { getFallbackImageUrl, getImageUrl } from '@/utils/imageUtils';
 import { MaterialIcons } from '@expo/vector-icons';
-import { TextInput } from 'react-native-gesture-handler';
 
 export default function TripDetailScreen() {
   const { tripId , countryId, cityId } = useLocalSearchParams();
@@ -84,13 +83,15 @@ export default function TripDetailScreen() {
       </View>
 
       {/* Guide Info */}
-      <View style={[styles.section, { backgroundColor: cardColor, borderColor }]}>
-        <Text style={[styles.sectionTitle, { color: textColor }]}>Guide</Text>
-        <Text style={[styles.subtext, { color: subTextColor }]}>
-          {trip.guide.user.name} — ${trip.guide.pricePerDay}/day
-        </Text>
-        <Text style={[styles.subtext, { color: subTextColor }]}>{trip.guide.description}</Text>
-      </View>
+      <Pressable onPress={() => setItemModal({ visible: true, item: trip.guide, type: 'guide' })}>
+        <View style={[styles.section, { backgroundColor: cardColor, borderColor }]}>
+          <Text style={[styles.sectionTitle, { color: textColor }]}>Guide</Text>
+          <Text style={[styles.subtext, { color: subTextColor }]}>
+            {trip.guide.user.name} — ${trip.guide.pricePerDay}/day
+          </Text>
+          <Text style={[styles.subtext, { color: subTextColor }]}>{trip.guide.description}</Text>
+        </View>
+      </Pressable>
 
       {/* Hotel Info */}
       {trip.tripHotels.map(({ hotel, roomType }: any, i: number) => (
@@ -290,9 +291,19 @@ export default function TripDetailScreen() {
                   <Text style={{ color: subTextColor }}>{itemModal.item.address || itemModal.item.description}</Text>
                 </View>
               </View>
-              {itemModal.type === 'hotel' && itemModal.item.roomType && (
+              {/* Show room type: either on the item or find it from trip.tripHotels */}
+              {itemModal.type === 'hotel' && (() => {
+                const rt = itemModal.item.roomType ?? trip.tripHotels.find((th:any) => th.hotel?.id === itemModal.item?.id)?.roomType;
+                if (!rt) return null;
+                return (
+                  <View style={{ marginTop: 8 }}>
+                    <Text style={{ color: subTextColor }}>Room: {rt.label} — ${rt.baseNightlyRate}</Text>
+                  </View>
+                );
+              })()}
+              {itemModal.type === 'guide' && (
                 <View style={{ marginTop: 8 }}>
-                  <Text style={{ color: subTextColor }}>Room: {itemModal.item.roomType.label} — ${itemModal.item.roomType.baseNightlyRate}</Text>
+                  <Text style={{ color: subTextColor }}>Price: ${itemModal.item.pricePerDay}/day</Text>
                 </View>
               )}
               <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
