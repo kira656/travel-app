@@ -17,6 +17,21 @@ export const hotelsApi = {
 			throw error;
 		}
 	},
+
+	getAvailableHotels: async (params: { cityId?: number; startDate?: string; endDate?: string; page?: number; limit?: number } = {}) => {
+		try {
+			const query = new URLSearchParams()
+			if (params.cityId) query.append('cityId', String(params.cityId))
+			if (params.startDate) query.append('startDate', params.startDate)
+			if (params.endDate) query.append('endDate', params.endDate)
+			if (params.page) query.append('page', String(params.page))
+			if (params.limit) query.append('limit', String(params.limit))
+			const response = await client.get(`/hotels/available?${query.toString()}`)
+			return response.data
+		} catch (error: any) {
+			throw error
+		}
+	},
 	getRoomType: async (hotelId: number, roomTypeId: number) => {
 		try {
 			const response = await client.get(`/hotels/${hotelId}/room-types/${roomTypeId}`);

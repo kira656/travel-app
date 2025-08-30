@@ -459,9 +459,24 @@ export default function CityDetails() {
               >
                 <Text style={[styles.actionText, themeStyles.text]}>View Trips</Text>
               </Pressable>
-
               <Pressable
                 style={styles.actionButton}
+                accessibilityLabel="Make custom trip"
+                onPress={() =>
+                  router.push({
+                    pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/trips/custom',
+                    params: { countryId: cityData.country.id.toString(), cityId: cityData.id.toString() },
+                  })
+                }
+              >
+                <Text style={[styles.actionText, themeStyles.text]}>Make Custom Trip</Text>
+              </Pressable>
+              
+            </View>
+            <View style={styles.actionsRow}>
+            <Pressable
+                style={styles.actionButton}
+                accessibilityLabel="View On Map"
                 onPress={() =>
                   router.push({
                     pathname: '/(tabs)/(protected)/countries/[countryId]/[cityId]/map',
@@ -469,7 +484,7 @@ export default function CityDetails() {
                   })
                 }
               >
-                <Text style={[styles.actionText, themeStyles.text]}>View on Map</Text>
+                <Text style={[styles.actionText, themeStyles.text]}>View On Map</Text>
               </Pressable>
             </View>
           </View>

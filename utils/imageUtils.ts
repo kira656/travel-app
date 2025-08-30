@@ -1,6 +1,6 @@
 import type { ImageData } from '@/apis/countries.types';
 
-const STORAGE_BASE_URL = 'http://192.168.137.208:3000/storage/media';
+const STORAGE_BASE_URL = 'http://192.168.43.40:3000/storage/media';
 
 export const getImageUrl = (imageData: ImageData | null): string | undefined => {
   if (!imageData || !imageData.objectKey) return undefined;

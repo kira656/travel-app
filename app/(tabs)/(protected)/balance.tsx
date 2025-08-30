@@ -97,6 +97,7 @@ export default function BalanceScreen() {
   <Text style={{ fontSize: 20, fontWeight: '600', color: primaryText }}>Balance</Text>
   <Text style={{ fontSize: 28, marginTop: 8, color: primaryText }}>${wallet?.balance ?? '0.00'}</Text>
   <Text style={{ marginTop: 8, color: secondaryText }}>{wallet?.currency ?? 'USD'}</Text>
+  <Pressable onPress={()=>loadWallet()} ><Text>refresh</Text></Pressable>
 </View>
 
               <Pressable onPress={() => setShowRequestModal(true)} style={{ marginTop: 16, backgroundColor: '#0a7ea4', padding: 12, borderRadius: 8 }}>
