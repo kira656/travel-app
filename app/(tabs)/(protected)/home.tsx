@@ -1,264 +1,146 @@
 
-import { FavoriteItem } from '@/apis/auth.types';
-import { useAuthStore } from '@/stores/authStore';
+import client from '@/apis/client';
+import popularApi from '@/apis/popular';
 import { useThemeStore } from '@/stores/themeStore';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { useFonts } from 'expo-font';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  Alert,
-  FlatList,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import React from 'react';
+import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Home() {
-  
-  const router = useRouter();
   const { darkMode } = useThemeStore();
-  const { user, toggleFavorite, isFavorite,isLoggedIn } = useAuthStore(); // Add this line
-  
-  const handleFavoritePress = (item: FavoriteItem) => {
-    console.log('Favorite pressed - isLoggedIn:', isLoggedIn);
-    
-    if (!isLoggedIn) {
-      console.log('Showing login prompt');
-      Alert.alert(
-        'Login Required',
-        'Please login to save favorites',
-        [
-          { 
-            text: 'Cancel', 
-            style: 'cancel' 
-          },
-          { 
-            text: 'Login', 
-            onPress: () => router.push('/login') 
-          }
-        ]
-      );
-      return;
-    }
-    console.log('Toggling favorite');
-    toggleFavorite(item);
-  };
+  const base = process.env.EXPO_PUBLIC_API_URL || '';
+  const router = useRouter();
 
+  const getImageUri = (path?: string) => {
+    if (!path) return undefined
+    if (path.startsWith('http') || path.startsWith('data:')) return path
+    const baseUrl = (client && (client.defaults as any)?.baseURL) || base || ''
+    return `${baseUrl}${path}`
+  }
 
-  const [activeTab, setActiveTab] = useState('flights');
-  const [fontsLoaded] = useFonts({
-    'Poppins-Regular': require('../../../assets/fonts/Poppins-Regular.ttf'),
-  });
+  const { data: citiesData } = useQuery({ queryKey: ['popular', 'cities'], queryFn: () => popularApi.getPopular('city') })
+  const { data: hotelsData } = useQuery({ queryKey: ['popular', 'hotels'], queryFn: () => popularApi.getPopular('hotel') })
+  const { data: countriesData } = useQuery({ queryKey: ['popular', 'countries'], queryFn: () => popularApi.getPopular('country') })
+  const { data: tripsData } = useQuery({ queryKey: ['popular', 'trips'], queryFn: () => popularApi.getPopular('trip') })
 
-  // Sample Data (remains the same)
-  const [upcomingEvents] = useState([
-    {
-      id: '1',
-      title: 'Beach Festival',
-      location: 'Bali, Indonesia',
-      date: '2023-12-15',
-      image: require('../../../assets/images/beach.jpg'),
-      daysLeft: '12 days left'
-    },
-    {
-      id: '2',
-      title: 'Mountain Trek',
-      location: 'Swiss Alps',
-      date: '2024-01-20',
-      image: require('../../../assets/images/mountain.jpg'),
-      daysLeft: 'Coming soon'
-    },
-    {
-      id: '3',
-      title: 'City Marathon',
-      location: 'New York, USA',
-      date: '2023-11-30',
-      image: require('../../../assets/images/marathon.jpg'),
-      daysLeft: '3 days left'
-    }
-  ]);
+  const normalize = (d: any) => {
+    if (!d) return []
+    if (Array.isArray(d)) return d
+    if (d.items && Array.isArray(d.items)) return d.items
+    return []
+  }
 
-  const popularDestinations = [
-    { id: '1', name: 'Paris', image: require('../../../assets/images/paris.jpg'), price: '$399',type: 'destination' },
-    { id: '2', name: 'Tokyo', image: require('../../../assets/images/tokyo.jpg'), price: '$599',type: 'destination' },
-    { id: '3', name: 'New York', image: require('../../../assets/images/nyc.jpg'), price: '$299',type: 'destination' },
-  ];
-
-  const deals = [
-    { id: '1', title: '30% Off Europe', discount: '30% OFF', expiry: '2 days left' },
-    { id: '2', title: 'Beach Resorts', discount: '40% OFF', expiry: '5 days left' },
-    { id: '3', title: 'Winter Getaway', discount: '25% Off', expiry: '1 week left' },
-  ];
-  
-
-
-  if (!fontsLoaded) return null;
+  const popularCities = normalize(citiesData)
+  const popularHotels = normalize(hotelsData)
+  const popularCountries = normalize(countriesData)
+  const upcomingTrips = normalize(tripsData)
 
   return (
-    
       <ScrollView style={[styles.bgWhite, darkMode && styles.bgDark]} showsVerticalScrollIndicator={false}>
-        
-        {/* Hero Banner */}
-        <View style={styles.heroContainer}>
-          <View style={[styles.heroContent, darkMode && styles.heroContentDark]}>
-            <Text style={[styles.heroTitle, darkMode && styles.darkText]}>Explore the World</Text>
-            <Text style={[styles.heroSubtitle, darkMode && styles.darkSubtext]}>
-              Find the best deals for your next trip
-            </Text>
-            <TouchableOpacity
-              style={styles.searchButton}
-            // onPress={() => router.push('/search')}
-            >
-              <FontAwesome name="search" size={16} color="#fff" />
-              <Text style={styles.searchText}>Search flights or hotels</Text>
-            </TouchableOpacity>
+      <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Popular Cities</Text>
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={popularCities}
+        keyExtractor={(item, idx) => `${item.id}-${idx}`}
+        renderItem={({ item }) => (
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.push(`/countries/${item.id}` as any)}>
+            <View style={[styles.destinationCard, darkMode && styles.darkCard]}> 
+              <View style={styles.imageWrap}>
+                <Image source={{ uri: getImageUri(item.image) }} style={styles.destinationImage} />
+                <View style={styles.imageOverlay}>
+                  <Text style={[styles.overlayTitle, darkMode && styles.darkText]} numberOfLines={1}>{item.title}</Text>
+                </View>
+                <View style={[styles.ratingBadge, darkMode && styles.ratingBadgeDark]}>
+                  <Text style={styles.ratingText}>{item.avgRating}</Text>
+                </View>
+              </View>
+              <View style={styles.destinationInfo}>
+                <Text style={[styles.destinationPrice, darkMode && styles.darkSubtext]}>Rating: {item.avgRating}</Text>
           </View>
         </View>
-
-        {/* Booking Tabs */}
-        {/* <View style={[styles.tabContainer, darkMode && styles.tabContainerDark]}>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'flights' && styles.activeTab,
-            ]}
-            onPress={() => setActiveTab('flights')}
-          >
-            <Ionicons
-              name="airplane"
-              size={20}
-              color={
-                activeTab === 'flights'
-                  ? '#fff'
-                  : (darkMode ? '#94a3b8' : '#64748b')
-              }
-            />
-            <Text style={[
-              styles.tabText,
-              activeTab === 'flights' ? styles.activeTabText : {},
-            ]}>
-              Flights
-            </Text>
           </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.eventList}
+      />
 
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'hotels' && styles.activeTab,
-            ]}
-            onPress={() => setActiveTab('hotels')}
-          >
-            <Ionicons
-              name="bed"
-              size={20}
-              color={
-                activeTab === 'hotels'
-                  ? '#fff'
-                  : (darkMode ? '#94a3b8' : '#64748b')
-              }
-            />
-            <Text style={[
-              styles.tabText,
-              activeTab === 'hotels' ? styles.activeTabText : {},
-            ]}>
-              Hotels
-            </Text>
-          </TouchableOpacity>
-        </View> */}
-
-        {/* Popular Destinations */}
-        <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Popular Destinations</Text>
+      <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Popular Hotels</Text>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          data={popularDestinations}
-          keyExtractor={(item) => item.id}
+        data={popularHotels}
+        keyExtractor={(item, idx) => `${item.id}-${idx}`}
           renderItem={({ item }) => (
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.push(`/hotels/${item.id}` as any)}>
             <View style={[styles.destinationCard, darkMode && styles.darkCard]}>
-              <Image source={item.image} style={styles.destinationImage} />
-              <View style={styles.destinationInfo}>
-                <View style={styles.nameAndFavorite}>
-                  <Text style={[styles.destinationName, darkMode && styles.darkText]}>
-                    {item.name}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => handleFavoritePress({
-                      id: item.id,
-                      name: item.name,
-                      type: 'destination',
-                      price: item.price,
-                      image: item.image
-                    })}
-                    style={styles.favoriteButton}
-                  >
-                    <MaterialIcons
-                      name={isFavorite(item.id) ? "favorite" : "favorite-border"}
-                      size={24}
-                      color={
-                        isFavorite(item.id) 
-                          ? '#ef4444' // Always red when favorited
-                          : darkMode 
-                            ? '#e2e8f0' // Light gray in dark mode
-                            : '#334155' // Dark gray in light mode
-                      }
-                    />
-                  </TouchableOpacity>
+                <View style={styles.imageWrap}>
+                  <Image source={{ uri: getImageUri(item.image) }} style={styles.destinationImage} />
+                  <View style={styles.imageOverlay}>
+                    <Text style={[styles.overlayTitle, darkMode && styles.darkText]} numberOfLines={1}>{item.title}</Text>
+                  </View>
+                  <View style={[styles.ratingBadge, darkMode && styles.ratingBadgeDark]}>
+                    <Text style={styles.ratingText}>{item.avgRating}</Text>
+                  </View>
                 </View>
-                <Text style={[styles.destinationPrice, darkMode && styles.darkSubtext]}>
-                  From {item.price}
-                </Text>
+              <View style={styles.destinationInfo}>
+                  <Text style={[styles.destinationPrice, darkMode && styles.darkSubtext]}>Rating: {item.avgRating}</Text>
               </View>
             </View>
+            </TouchableOpacity>
           )}
           contentContainerStyle={styles.eventList}
         />
 
-        {/* Special Offers */}
-        <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Special Offers</Text>
+      <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Popular Countries</Text>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          data={deals}
-          keyExtractor={(item) => item.id}
+        data={popularCountries}
+        keyExtractor={(item, idx) => `${item.id}-${idx}`}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.dealCard, darkMode && styles.dealCardDark]}>
-              <View style={styles.dealBadge}>
-                <Text style={styles.dealDiscount}>{item.discount}</Text>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.push(`/countries/${item.id}` as any)}>
+              <View style={[styles.destinationCard, darkMode && styles.darkCard]}>
+                <View style={styles.imageWrap}>
+                  <Image source={{ uri: getImageUri(item.image) }} style={styles.destinationImage} />
+                  <View style={styles.imageOverlay}>
+                    <Text style={[styles.overlayTitle, darkMode && styles.darkText]} numberOfLines={1}>{item.title}</Text>
+                  </View>
+                  <View style={[styles.ratingBadge, darkMode && styles.ratingBadgeDark]}>
+                    <Text style={styles.ratingText}>{item.avgRating}</Text>
+                  </View>
+                </View>
+                <View style={styles.destinationInfo}>
+                  <Text style={[styles.destinationPrice, darkMode && styles.darkSubtext]}>Rating: {item.avgRating}</Text>
+                </View>
               </View>
-              <Text style={[styles.dealTitle, darkMode && styles.darkText]}>{item.title}</Text>
-              <Text style={[styles.dealExpiry, darkMode && styles.darkSubtext]}>{item.expiry}</Text>
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.dealList}
-        />
+        contentContainerStyle={styles.eventList}
+      />
 
-        {/* Cab Section */}
-        <View style={[styles.cabContainer, darkMode && styles.cabContainerDark]}>
-          <View style={styles.cabTextContainer}>
-            <Text style={[styles.cabTitle, darkMode && styles.darkText]}>Need a cab?</Text>
-            <Text style={[styles.cabSubtitle, darkMode && styles.darkSubtext]}>
-              Get a ride in minutes with our trusted partners
-            </Text>
+      <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Upcoming Trips</Text>
+      <FlatList
+        data={upcomingTrips}
+        keyExtractor={(item, idx) => `${item.id}-${idx}`}
+        renderItem={({ item }) => (
+          <TouchableOpacity activeOpacity={0.9} onPress={() => router.push(`/trips/${item.id}` as any)}>
+            <View style={[styles.eventCard, darkMode && styles.eventCardDark]}>
+              <Image source={{ uri: getImageUri(item.image) }} style={styles.eventImage} />
+              <View style={styles.eventDetails}>
+                <Text style={[styles.eventTitle, darkMode && styles.darkText]}>{item.title}</Text>
+                <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext]}>From {item.startDate} — To {item.endDate}</Text>
+                <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext]}>Price: €{item.pricePerPerson.toFixed(2)}</Text>
+              </View>
           </View>
-          <TouchableOpacity
-            style={[styles.cabButton, darkMode && styles.cabButtonDark]}
-          // onPress={() => router.push('/cab-booking')}
-          >
-            <MaterialIcons name="directions-car" size={24} color="#fff" />
-            <Text style={styles.cabButtonText}>Book Now</Text>
           </TouchableOpacity>
-        </View>
+        )}
+        contentContainerStyle={styles.eventList}
+      />
 
-        {/* Add extra space if needed */}
         <View style={{ height: 20 }} />
-
       </ScrollView>
-    
-  );
+  )
 }
 
 
@@ -313,9 +195,52 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     resizeMode: 'cover',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  imageWrap: {
+    position: 'relative',
+    width: '100%',
+    height: 120,
+    overflow: 'hidden',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    backgroundColor: '#e2e8f0',
+  },
+  ratingBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  ratingBadgeDark: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  ratingText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   destinationInfo: {
     padding: 12,
+  },
+  imageOverlay: {
+    position: 'absolute',
+    left: 8,
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  overlayTitle: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
   },
 
   destinationName: {
@@ -466,6 +391,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 6,
     color: '#64748b',
+  },
+  eventActionRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  badge: {
+    backgroundColor: '#0a7ea4',
+    color: '#fff',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    fontWeight: '700',
+  },
+  badgeDark: {
+    backgroundColor: '#0ea5a4',
   },
   eventButton: {
     flexDirection: 'row',

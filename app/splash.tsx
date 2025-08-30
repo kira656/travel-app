@@ -155,7 +155,7 @@ export default function SplashScreen() {
           </TouchableOpacity>
 
           {/* Home */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.homeButton, darkMode && styles.darkHomeButton]}
             onPress={handleHome}
           >
@@ -167,7 +167,7 @@ export default function SplashScreen() {
             <Text style={[styles.homeButtonText, darkMode && styles.darkHomeButtonText]}>
               Go to Home
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </Animated.View>
 
         {/* Footer */}

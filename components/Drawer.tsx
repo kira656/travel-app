@@ -2,11 +2,11 @@ import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import {
-  Animated,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface DrawerItem {
@@ -18,10 +18,10 @@ interface DrawerItem {
 interface DrawerProps {
   visible: boolean;
   onClose: () => void;
-  items?: DrawerItem[];
+  notifications?: any[];
 }
 
-const Drawer: React.FC<DrawerProps> = ({ visible, onClose, items = [] }) => {
+const Drawer: React.FC<DrawerProps> = ({ visible, onClose, notifications = [] }) => {
   const translateX = useRef(new Animated.Value(-300)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const { darkMode } = useThemeStore();
@@ -79,30 +79,28 @@ const Drawer: React.FC<DrawerProps> = ({ visible, onClose, items = [] }) => {
         ]}
       >
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.title, { color: colors.text }]}>Menu</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
           <TouchableOpacity onPress={onClose}>
             <MaterialIcons name="arrow-back-ios" size={24} color={colors.icon} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.items}>
-          {items.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.item}
-              onPress={item.onPress}
-            >
-              {item.icon && (
-                <MaterialIcons
-                  name={item.icon}
-                  size={22}
-                  color={colors.icon}
-                  style={{ marginRight: 12 }}
-                />
-              )}
-              <Text style={[styles.itemText, { color: colors.text }]}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
+          {notifications.length === 0 ? (
+            <View style={{ padding: 20 }}>
+              <Text style={{ color: colors.text }}>No notifications</Text>
+            </View>
+          ) : (
+            notifications.map((n: any) => (
+              <View key={n.id} style={[styles.notification, { borderBottomColor: colors.border }] }>
+                <View style={styles.notificationHeader}>
+                  <Text style={[styles.notificationTitle, { color: colors.text }]} numberOfLines={1}>{n.title}</Text>
+                  <Text style={[styles.notificationTime, { color: colors.icon }]}>{new Date(n.createdAt).toLocaleString()}</Text>
+                </View>
+                <Text style={[styles.notificationBody, { color: colors.text }]} numberOfLines={3}>{n.body}</Text>
+              </View>
+            ))
+          )}
         </View>
       </Animated.View>
     </View>
@@ -151,6 +149,27 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  notification: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  notificationTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  notificationTime: {
+    fontSize: 12,
+  },
+  notificationBody: {
+    fontSize: 14,
   },
 });
 

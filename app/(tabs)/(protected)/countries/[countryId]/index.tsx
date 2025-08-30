@@ -257,7 +257,7 @@ export default function CountryDetails() {
         {/* Country Code and Rating */}
         <View style={styles.basicInfoSection}>
           <Text style={[styles.countryCode, isDarkMode && styles.darkSubtext]}>
-            {country.code}
+            {country.name}
           </Text>
           {country.avgRating !== '0.00' && (
             <View style={styles.ratingContainer}>

@@ -1,4 +1,5 @@
 // src/stores/authStore.ts
+import client from '@/apis/client';
 import axios from 'axios';
 import { create } from 'zustand';
 
@@ -117,6 +118,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     ]);
 
     axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+    // ensure the shared client instance also has the auth header so API modules using `client` are authorized
+    try {
+      client.defaults.headers.common.Authorization = `Bearer ${token}`;
+    } catch (e) {
+      // ignore if client isn't available for some reason
+    }
 
     set({
       user: userWithFavourites,
@@ -136,6 +143,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     ]);
 
     delete axios.defaults.headers.common.Authorization;
+    try {
+      delete client.defaults.headers.common.Authorization;
+    } catch (e) {
+      // ignore
+    }
 
     set({
       user: null,

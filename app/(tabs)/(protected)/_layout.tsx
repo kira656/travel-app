@@ -1,8 +1,10 @@
+import notificationsApi from '@/apis/notifications';
 import Drawer from '@/components/Drawer';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
 import { Redirect, router, Tabs } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
@@ -67,6 +69,7 @@ const CustomHeader = ({
 export default function ProtectedLayout() {
   const { darkMode } = useThemeStore();
   const { isLoggedIn, isLoading } = useAuthStore();
+  const { token } = useAuthStore();
   const logged = isLoggedIn; // derive from auth store
   const insets = useSafeAreaInsets();
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -105,6 +108,12 @@ export default function ProtectedLayout() {
 
   const openDrawer = () => setDrawerVisible(true);
   const closeDrawer = () => setDrawerVisible(false);
+
+  const { data: notificationsData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notificationsApi.getNotifications(token ?? undefined),
+    enabled: !!logged,
+  });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bgScreen }} edges={["top", "left", "right"]}>
@@ -228,38 +237,19 @@ export default function ProtectedLayout() {
           name="countries/[countryId]/[cityId]/trips/[tripId]/index"
           options={{ href: null, title: 'Attractions' }}
         />
+                <Tabs.Screen
+          name="countries/[countryId]/[cityId]/trips/custom"
+          options={{ href: null, title: 'Attractions' }}
+        />
+                        <Tabs.Screen
+          name="(protected)/bookings"
+          options={{ href: null, title: 'Attractions' }}
+        />
+        
       </Tabs>
 
-      <Drawer
-        visible={drawerVisible}
-        onClose={closeDrawer}
-        items={[
-          // {
-          //   label: 'Settings',
-          //   icon: 'settings',
-          //   onPress: () => {
-          //     closeDrawer();
-          //     router.push('/account/settings');
-          //   },
-          // },
-          {
-            label: 'Personal Info',
-            icon: 'person',
-            onPress: () => {
-              closeDrawer();
-              router.push('/account/personal');
-            },
-          },
-          {
-            label: 'About',
-            icon: 'info',
-            onPress: () => {
-              closeDrawer();
-              router.push('/about' as any);
-            },
-          },
-        ]}
-      />
+
+      <Drawer visible={drawerVisible} onClose={closeDrawer} notifications={notificationsData?.items ?? []} />
     </SafeAreaView>
   );
 }
