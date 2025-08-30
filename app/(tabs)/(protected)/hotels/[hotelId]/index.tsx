@@ -159,7 +159,8 @@ export default function HotelDetails() {
 							<Text style={{ color: darkMode ? '#9BD3E6' : '#0a7ea4' }}>{hotel.favourites?.length ?? hotel.favouritesCount ?? 0} favourites</Text>
 						</Pressable>
 						<Pressable onPress={() => setShowReviewsModal(true)}>
-							<Text style={{ color: darkMode ? '#9BD3E6' : '#0a7ea4' }}>{hotel.reviewsCount ?? 0} reviews</Text>
+							<Text style={{ color: darkMode ? '#9BD3E6' : '#0a7ea4' }}>{reviewsList.length
+							 ?? 0} reviews</Text>
 						</Pressable>
 					</View>
 					<Pressable onPress={handleAddFavourite} style={{ padding: 8 }}>

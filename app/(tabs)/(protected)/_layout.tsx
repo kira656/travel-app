@@ -186,6 +186,10 @@ export default function ProtectedLayout() {
           }}
         />
         <Tabs.Screen
+          name="bookings"
+          options={{ href: null, title: 'Bookings' }}
+        />
+        <Tabs.Screen
           name="countries/[countryId]/index"
           options={{ href: null, title: 'Country' }}
         />
@@ -241,10 +245,7 @@ export default function ProtectedLayout() {
           name="countries/[countryId]/[cityId]/trips/custom"
           options={{ href: null, title: 'Attractions' }}
         />
-                        <Tabs.Screen
-          name="(protected)/bookings"
-          options={{ href: null, title: 'Attractions' }}
-        />
+
         
       </Tabs>
 

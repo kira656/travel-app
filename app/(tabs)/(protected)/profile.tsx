@@ -4,11 +4,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function ProfileScreen() {
@@ -19,7 +19,7 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     try {
       // Navigate to splash immediately to avoid the auth-layout redirect racing
-      router.replace('/');
+      router.replace('/splash');
       await logout();
     } catch (err) {
       console.error('Logout error:', err);

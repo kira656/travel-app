@@ -1,7 +1,6 @@
 import { citiesApi } from '@/apis/cities';
 import { favouritesApi } from '@/apis/favourites';
 import { reviewsApi } from '@/apis/reviews';
-import MapView, { Marker } from '@/components/MapShim';
 import SafeAreaView from '@/components/SafeAreaView';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -382,42 +381,7 @@ export default function CityDetails() {
           </View>
 
           {/* Map View */}
-          <View style={[styles.mapCard, themeStyles.card]}>
-            <Text style={[styles.mapTitle, themeStyles.text]}>Location</Text>
-            {Platform.OS === 'web' ? (
-              <Text style={[styles.webFallback, themeStyles.subtext]}>
-                Map view is not supported on web.
-              </Text>
-            ) : (
-              (Platform.OS === 'ios' || Platform.OS === 'android' || (typeof latNum === 'number' && typeof lngNum === 'number')) ? (
-                <View style={{ height: 400, width: '100%', borderRadius: 8, overflow: 'hidden' }}>
-                  <MapView
-                    style={{ flex: 1 }}
-                    mapType="standard"
-                    zoomEnabled={true}
-                    scrollEnabled={true}
-                    pitchEnabled={true}
-                    rotateEnabled={true}
-                    showsUserLocation={true}
-                    showsMyLocationButton={true}
-                    showsCompass={true}
-                    initialRegion={{
-                      latitude: 41.8933203,
-                      longitude: 12.4829321,
-                      latitudeDelta: 0.1,
-                      longitudeDelta: 0.1,
-                    }}
-                  >
-                    <Marker coordinate={{ latitude: 41.8933203, longitude: 12.4829321 }} />
-                  </MapView>
-                </View>
-              ) : (
-                <View style={[styles.imagePlaceholder, themeStyles.card]}>
-                  <Text style={themeStyles.subtext}>Map unavailable for this device.</Text>
-                </View>
-              )
-            )}
-          </View>
+
 
           {/* Action Buttons */}
           <View style={[styles.actionsContainer, themeStyles.card]}>

@@ -1,5 +1,4 @@
 
-import client from '@/apis/client';
 import popularApi from '@/apis/popular';
 import { useThemeStore } from '@/stores/themeStore';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +14,7 @@ export default function Home() {
   const getImageUri = (path?: string) => {
     if (!path) return undefined
     if (path.startsWith('http') || path.startsWith('data:')) return path
-    const baseUrl = (client && (client.defaults as any)?.baseURL) || base || ''
+    const baseUrl = 'http://192.168.43.40:3000/storage/media'
     return `${baseUrl}${path}`
   }
 
@@ -45,7 +44,15 @@ export default function Home() {
         data={popularCities}
         keyExtractor={(item, idx) => `${item.id}-${idx}`}
         renderItem={({ item }) => (
-          <TouchableOpacity activeOpacity={0.85} onPress={() => router.push(`/countries/${item.id}` as any)}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => {
+              const countryId = item.countryId ?? ''
+              const cityId = item.id
+              const name = encodeURIComponent(item.title || '')
+              router.push(`/countries/${countryId}/${cityId}?name=${name}` as any)
+            }}
+          >
             <View style={[styles.destinationCard, darkMode && styles.darkCard]}> 
               <View style={styles.imageWrap}>
                 <Image source={{ uri: getImageUri(item.image) }} style={styles.destinationImage} />
@@ -121,21 +128,31 @@ export default function Home() {
 
       <Text style={[styles.sectionTitle, darkMode && styles.darkText]}>Upcoming Trips</Text>
       <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
         data={upcomingTrips}
         keyExtractor={(item, idx) => `${item.id}-${idx}`}
         renderItem={({ item }) => (
-          <TouchableOpacity activeOpacity={0.9} onPress={() => router.push(`/trips/${item.id}` as any)}>
-            <View style={[styles.eventCard, darkMode && styles.eventCardDark]}>
-              <Image source={{ uri: getImageUri(item.image) }} style={styles.eventImage} />
-              <View style={styles.eventDetails}>
-                <Text style={[styles.eventTitle, darkMode && styles.darkText]}>{item.title}</Text>
-                <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext]}>From {item.startDate} — To {item.endDate}</Text>
-                <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext]}>Price: €{item.pricePerPerson.toFixed(2)}</Text>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => {
+              const countryId = item.countryId ?? ''
+              const cityId = item.cityId ?? item.cityId ?? ''
+              const tripId = item.id
+              router.push(`/countries/${countryId}/${cityId}/trips/${tripId}` as any)
+            }}
+          >
+            <View style={[styles.upcomingCard, darkMode && styles.eventCardDark]}>
+              <Image source={{ uri: getImageUri(item.image) }} style={styles.upcomingImage} />
+              <View style={styles.upcomingInfo}>
+                <Text style={[styles.eventTitle, darkMode && styles.darkText]} numberOfLines={2}>{item.title}</Text>
+                <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext]}> {item.startDate} → {item.endDate}</Text>
+                <Text style={[styles.eventInfoText, darkMode && styles.darkSubtext, { marginTop: 8 }]}>Price: <Text style={{ fontWeight: '700' }}>€{Number(item.pricePerPerson).toFixed(2)}</Text></Text>
               </View>
           </View>
           </TouchableOpacity>
         )}
-        contentContainerStyle={styles.eventList}
+        contentContainerStyle={[styles.eventList, { paddingLeft: 16 }]}
       />
 
         <View style={{ height: 20 }} />
@@ -371,6 +388,22 @@ const styles = StyleSheet.create({
   eventImage: {
     width: '100%',
     height: 140,
+  },
+  upcomingCard: {
+    width: 260,
+    marginRight: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    elevation: 2,
+  },
+  upcomingImage: {
+    width: '100%',
+    height: 120,
+    resizeMode: 'cover',
+  },
+  upcomingInfo: {
+    padding: 12,
   },
   eventDetails: {
     padding: 12,
